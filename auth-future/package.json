@@ -2,7 +2,7 @@
   "name": "auth-future",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://authfuture.com/auth-future",
+  "homepage": "https://authfuture.com",
   "dependencies": {
     "cra-template": "1.2.0",
     "gh-pages": "^6.3.0",
