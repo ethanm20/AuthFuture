@@ -1,0 +1,132 @@
+html {
+    width: 100%;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+
+#register-otp-calculation-details #otp-container {
+    background-color: #F2f2f2; 
+}
+
+#register-otp-calculation-details {
+    display: flex;
+    flex-direction: column;
+    row-gap: 5px;
+}
+
+#calculation-box-heading {
+    background-color: #34495e;
+    color: #FFF;
+}
+
+#calculation-box #calculation-box-details {
+    display: block;
+    background-color: #ecf0f1;
+    overflow-y: scroll;
+    height: 100%;
+}
+
+.bi.bi-caret-down-fill {
+    width: auto;
+}
+
+.bi.bi-caret-down-fill:before {
+    font-family: 'bootstrap-icons';
+    color: #FFF;
+    content: '\F229';
+}
+
+#screens-container {
+    min-height: 60%;
+}
+
+#calculation-box {
+    min-height: 40%;
+}
+
+#register-step-one-form {
+    display: flex;
+    flex-direction: column;
+    row-gap: 5px;
+}
+
+form {
+    max-width: 500px;
+}
+
+#biometrics-screen {
+    display: none;
+}
+
+#add-biometric-credentials-form {
+    display: none;
+    flex-direction: column;
+    row-gap: 5px;
+    max-width: 400px;
+}
+
+.biometric-credential-container {
+    display: flex;
+    flex-direction: row; 
+    background-color: #bdc3c7; 
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    column-gap: 30px;
+    width: auto;
+}
+
+.biometric-credential-delete-btn {
+    border: none;
+    background-color: #bdc3c7;
+}
+
+.biometric-credential-delete-btn:before {
+    content: '\F78A';
+    font-size: 18px;
+    font-family: 'bootstrap-icons';
+}
+
+.add-biometric-credentials-form-top-row {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+/* Register Page */
+
+#screen-login-totp-code {
+    display: none;
+}
+
+#screen-login-biometrics {
+    display: none;
+}
+
+/* General */
+nav.sidebar {
+    width: 300px;
+    height: 100%;
+    display: flex;
+    background-color: #2980b9;
+    color: #FFF;
+    flex-direction: column;
+    position: fixed;
+}
+nav.sidebar a {
+    color: #FFF;
+    text-decoration: none;
+}
+main {
+    width: calc(100% - 320px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    left: 320px;
+    position: absolute;
+}
+
