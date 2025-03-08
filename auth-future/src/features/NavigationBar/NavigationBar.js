@@ -12,8 +12,16 @@ export function NavigationBar() {
             <Container>
               <Navbar.Brand href="/">AuthFuture</Navbar.Brand>
               <Nav className="me-auto">
-                <Nav.Link href="#home">Home</Nav.Link>
+                <Nav.Link href="/">Home</Nav.Link>
                 <NavDropdown title="Authentication Methods" id="basic-nav-dropdown">
+                  <NavDropdown.Item href="/password-authentication">Passwords</NavDropdown.Item>
+                  <NavDropdown.Item href="/webauthn-description">WebAuthn</NavDropdown.Item>
+                  <NavDropdown.Item href="/totp">TOTP</NavDropdown.Item>
+                  <NavDropdown.Item href="/tokens">Tokens</NavDropdown.Item>
+                  <NavDropdown.Divider />
+                  <NavDropdown.Item href="/history">History</NavDropdown.Item>
+                </NavDropdown>
+                <NavDropdown title="Method 1" id="basic-nav-dropdown">
                   <NavDropdown.Item href="/password-authentication">Passwords</NavDropdown.Item>
                   <NavDropdown.Item href="/webauthn-description">WebAuthn</NavDropdown.Item>
                   <NavDropdown.Item href="/totp">TOTP</NavDropdown.Item>
