@@ -1,6 +1,16 @@
 import Button from 'react-bootstrap/Button';
+import { GenerateBase32SecretKey } from './utilities/generate-base-32-key';
 
 export function TOTPTool() {
+    this.secretKeyState = {value: 'aaa'};
+
+    function clickGenerateSecretKey() {
+        var randomKey = GenerateBase32SecretKey()
+
+        return null;
+    }
+
+
     return (
         <>
         <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
@@ -22,10 +32,13 @@ export function TOTPTool() {
                     </div>
                     <div id="key-section">
                         <div id="secret-key-text">
-                            <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text"></input></span><br/>
+                            <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text" value={this.secretKeyState.value}></input></span><br/>
+                        </div>
+                        <div class="errorBox">
+                            <span></span>
                         </div>
                         <div id="key-update-buttons">
-                            <Button variant="secondary">Randomly Generate</Button><Button variant="primary">Submit</Button>
+                            <Button variant="secondary" onClick={clickGenerateSecretKey()}>Randomly Generate</Button><Button variant="primary">Submit</Button>
                         </div>
                     </div>
                 </div>
