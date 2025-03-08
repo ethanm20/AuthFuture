@@ -28,7 +28,7 @@ export function History() {
         <p>
             Due to the ease of which passwords could be compromised, in the 1980s OTPs (One Time Passwords) were invented. Each person would carry a small physical token producing a new code after approximately every 30 seconds that would enable them to login to the specific linked account in addition to their username and password.
         </p>
-        <img src="/imaages/rsa-token.jpg" width="600" />
+        <img src="/images/rsa-token.jpg" width="600" />
         <span>Figure 3: A Legacy RSA SecurID Token</span>
         <h3><b>Public Key Infrastructure (1990-)</b></h3>
         <p>
