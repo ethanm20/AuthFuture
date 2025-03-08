@@ -10,3 +10,17 @@
     display: flex;
     flex-direction: row;
 }
+
+
+#qr-code {
+    width: 300px;
+}
+
+#key-section {
+    display: flex;
+    flex-direction: column;
+}
+
+#generating-qr-code {
+    border-bottom: 1px solid #f3f3f3;
+}
