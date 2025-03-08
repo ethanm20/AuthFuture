@@ -17,7 +17,7 @@ function App() {
       <header className="App-header">
         <BrowserRouter>
           <Routes>
-            <Route exact path={process.env.PUBLIC_URL + '/'} element={<Home/>} />
+            <Route exact path={process.env.PUBLIC_URL + '/'} element={<TOTP/>} />
             <Route exact path={process.env.PUBLIC_URL + '/totp'} element={<TOTP/>} />
             <Route path="password-authentication" element={<PasswordAuthentication/>} />
             <Route path="webauthn-description" element={<WebAuthnDescription/>} />
