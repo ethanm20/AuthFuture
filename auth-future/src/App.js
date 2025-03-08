@@ -10,6 +10,7 @@ import { NavigationBar } from './features/NavigationBar/NavigationBar';
 import { History } from './pages/History/History';
 import { TOTP } from './pages/TOTP/TOTP';
 import { Tokens } from './pages/Tokens/Tokens';
+import { Footer } from './features/Footer/Footer';
 
 function App() {
   return (
@@ -30,7 +31,9 @@ function App() {
           </Routes>
         </BrowserRouter>
       </header>
-      <p>More coming soon...</p>
+      <footer>
+      <Footer />
+      </footer>
     </div>
   );
 }
