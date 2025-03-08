@@ -1,4 +1,26 @@
 #totp-tool-container {
     border: 1px solid #f3f3f3;
-    border-radius: 25%;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+#otp-secret {
+    display: flex;
+    flex-direction: row;
+}
+
+
+#qr-code {
+    width: 300px;
+}
+
+#key-section {
+    display: flex;
+    flex-direction: column;
+}
+
+#generating-qr-code {
+    border-bottom: 1px solid #f3f3f3;
 }

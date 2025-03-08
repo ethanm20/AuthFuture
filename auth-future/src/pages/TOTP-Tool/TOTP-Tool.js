@@ -21,10 +21,12 @@ export function TOTPTool() {
                         <b>QR Code Content: </b><span id="otp-qr-code-text"></span>
                     </div>
                     <div id="key-section">
-                        <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text"></input></span><br/>
-                        <Button variant="secondary">Randomly Generate</Button>
-
-                        <Button variant="primary">Submit</Button>
+                        <div id="secret-key-text">
+                            <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text"></input></span><br/>
+                        </div>
+                        <div id="key-update-buttons">
+                            <Button variant="secondary">Randomly Generate</Button><Button variant="primary">Submit</Button>
+                        </div>
                     </div>
                 </div>
             </div>
