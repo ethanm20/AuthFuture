@@ -23,7 +23,7 @@ export function WebAuthnDescription () {
             <p>
                 <b>U2F Protocol (2014):</b> The U2F protocol was developed in 2014, but from 2015, Chrome, Firefox and Opera began supporting the U2F protocol which enabled USB security keys to be used as part of Multi Factor Authentication on web apps. The U2F protocol was first developed by the FIDO Alliance in 2014. 
             </p>
-            <img src="/static/assets/yubico-security-key.jpg" />
+            <img src="/images/yubico-security-key.jpg" />
             <p>
                 <b>U2F Protocol Expansion (2015): </b> From 2015, the U2F protocol was updated to include support for NFC and Bluetooth as transport protocols over which U2F authentication could take place, essentially enabling support for NFC smartcards or Bluetooth tokens for authentication on web apps.
             </p>

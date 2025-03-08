@@ -14,7 +14,7 @@ export function TOTP() {
             <p>
                 The current TOTP protocol was first developed in 2010 and is a significant improvement on OTPs from since the 1980s which were physical tokens, particularly with financial institutions.
             </p>
-            <img src="/static/assets/rsa-token.jpg" />
+            <img src="/images/rsa-token.jpg" />
         </div>
         <div>
             <h3>How TOTP Authentication works?</h3>
