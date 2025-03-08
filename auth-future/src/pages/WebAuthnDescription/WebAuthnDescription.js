@@ -1,3 +1,5 @@
+import { NavigationBar } from "../../features/NavigationBar/NavigationBar";
+
 export function WebAuthnDescription () {
     return (
         <>
