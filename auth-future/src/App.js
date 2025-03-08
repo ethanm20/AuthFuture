@@ -22,7 +22,7 @@ function App() {
               <Route path="password-authentication" element={<PasswordAuthentication/>} />
               <Route path="webauthn-description" element={<WebAuthnDescription/>} />
               <Route path="history" element={<History/>} />
-              <Route path="totp" element={<TOTP/>} />
+              <Route exact path="/totp" element={<TOTP/>} />
               <Route path="tokens" element={<Tokens/>} />
             </Route>
           </Routes>
