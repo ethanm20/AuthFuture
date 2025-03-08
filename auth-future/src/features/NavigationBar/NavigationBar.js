@@ -21,13 +21,10 @@ export function NavigationBar() {
                   <NavDropdown.Divider />
                   <NavDropdown.Item href="/history">History</NavDropdown.Item>
                 </NavDropdown>
-                <NavDropdown title="Method 1" id="basic-nav-dropdown">
-                  <NavDropdown.Item href="/password-authentication">Passwords</NavDropdown.Item>
-                  <NavDropdown.Item href="/webauthn-description">WebAuthn</NavDropdown.Item>
-                  <NavDropdown.Item href="/totp">TOTP</NavDropdown.Item>
-                  <NavDropdown.Item href="/tokens">Tokens</NavDropdown.Item>
+                <NavDropdown title="Tools" id="basic-nav-dropdown">
+                  <NavDropdown.Item href="/totp-tool">TOTP 2FA</NavDropdown.Item>
                   <NavDropdown.Divider />
-                  <NavDropdown.Item href="/history">History</NavDropdown.Item>
+                  <NavDropdown.Item href="/webauthn-tool">WebAuthn</NavDropdown.Item>
                 </NavDropdown>
                 <Nav.Link href="#link">Link</Nav.Link>
               </Nav>
