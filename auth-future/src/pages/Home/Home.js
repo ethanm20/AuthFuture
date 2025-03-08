@@ -4,7 +4,7 @@ export function Home() {
 
     return (
         <>
-         <h2>Home1</h2>
+         <h2>Welcome to AuthFuture!</h2>
         
         <div>
             
