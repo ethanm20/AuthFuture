@@ -3,13 +3,17 @@ import Button from 'react-bootstrap/Button';
 export function TOTPTool() {
     return (
         <>
+        <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+        <link rel="stylesheet" href="/css/totp-tool.css"></link>
+
+
         <h2>Time-Based One Time Password (TOTP) Tool</h2>
         
         <div id="totp-tool-container">
             <div id="generating-qr-code">
                 <h3>Step 1: Generate Secret Key</h3>
 
-                <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+                
 
                 <div id="otp-secret">
                     <div id="qr-code">
