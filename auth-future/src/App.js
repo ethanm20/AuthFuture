@@ -15,16 +15,14 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <BrowserRouter basename={process.env.PUBLIC_URL}>
+        <BrowserRouter>
           <Routes>
             
-            <Route path={'/'} element={<NavigationBar/>}>
-              <Route index element={<Home/>} />
-              <Route path="password-authentication" element={<PasswordAuthentication/>} />
-              <Route path="webauthn-description" element={<WebAuthnDescription/>} />
-              <Route path="history" element={<History/>} />
-              <Route path="tokens" element={<Tokens/>} />
-            </Route>
+            <Route path={process.env.PUBLIC_URL + '/'} element={<Home/>} />
+            <Route path="password-authentication" element={<PasswordAuthentication/>} />
+            <Route path="webauthn-description" element={<WebAuthnDescription/>} />
+            <Route path="history" element={<History/>} />
+            <Route path="tokens" element={<Tokens/>} />
             <Route path={process.env.PUBLIC_URL + '/totp'} element={<TOTP/>} />
           </Routes>
         </BrowserRouter>
