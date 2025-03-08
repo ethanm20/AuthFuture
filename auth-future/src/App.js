@@ -17,13 +17,15 @@ function App() {
       <header className="App-header">
         <BrowserRouter>
           <Routes>
-            <Route exact path={'/totp'} element={<TOTP/>} />
-            <Route exact path={'/'} element={<TOTP/>} />
             
-            <Route path="password-authentication" element={<PasswordAuthentication/>} />
-            <Route path="webauthn-description" element={<WebAuthnDescription/>} />
-            <Route path="history" element={<History/>} />
-            <Route path="tokens" element={<Tokens/>} />
+            <Route path="/" element={<NavigationBar/>}>
+              <Route index element={<Home/>} />
+              <Route path="password-authentication" element={<PasswordAuthentication/>} />
+              <Route path="webauthn-description" element={<WebAuthnDescription/>} />
+              <Route path="history" element={<History/>} />
+              <Route path="totp" element={<TOTP/>} />
+              <Route path="tokens" element={<Tokens/>} />
+            </Route>
             
           </Routes>
         </BrowserRouter>
