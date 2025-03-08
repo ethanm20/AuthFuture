@@ -23,7 +23,6 @@ function App() {
               <Route path="password-authentication" element={<PasswordAuthentication/>} />
               <Route path="webauthn-description" element={<WebAuthnDescription/>} />
               <Route path="history" element={<History/>} />
-              <Route path={process.env.PUBLIC_URL + '/totp'} element={<TOTP/>} />
               <Route path="tokens" element={<Tokens/>} />
             </Route>
           </Routes>
