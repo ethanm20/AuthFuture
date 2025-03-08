@@ -26,7 +26,7 @@ export function NavigationBar() {
                   <NavDropdown.Divider />
                   <NavDropdown.Item href="/webauthn-tool">WebAuthn</NavDropdown.Item>
                 </NavDropdown>
-                <Nav.Link href="#link">Link</Nav.Link>
+                <Nav.Link href="#link">Blog</Nav.Link>
               </Nav>
             </Container>
           </Navbar>
