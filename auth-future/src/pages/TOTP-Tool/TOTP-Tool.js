@@ -18,7 +18,7 @@ export function TOTPTool() {
                 <div id="otp-secret">
                     <div id="qr-code">
                         <div id="otp-qr-code"></div>
-                        <b>QR Code Content: </b><span id="otp-qr-code-text"></span>
+                        <div id="qr-code-text"><span id="otp-qr-code-text">Null</span></div>
                     </div>
                     <div id="key-section">
                         <div id="secret-key-text">
