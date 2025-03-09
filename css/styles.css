@@ -1,0 +1,23 @@
+/* Glboal Styles */
+
+
+
+
+
+
+/* Footer */
+
+#footer-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+#footer-container-left {
+    width: 50%;
+}
+
+#footer-container-right {
+    width: 50%;
+    text-align: right;
+}
