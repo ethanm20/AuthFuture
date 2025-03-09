@@ -1,0 +1,21 @@
+#webauthn-tool-container {
+    border: 1px solid #f3f3f3;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+#webauthn-register {
+    border-bottom: 1px solid #f3f3f3;
+    padding-bottom: 20px;
+}
+
+#passkey-register-tab {
+    background-color: #D9DDDC;
+    color: #000;
+}
+
+#passkey-tab-title {
+    border-bottom: 1px solid #000;
+}

@@ -1,13 +1,30 @@
 import Button from 'react-bootstrap/Button';
 import { GenerateBase32SecretKey } from './utilities/generate-base-32-key';
+import { useState } from 'react';
 
 export function TOTPTool() {
-    this.secretKeyState = {value: 'aaa'};
+    const [secretKeyValue, setSecretKey] = useState('aaa');
+
+    const [QRTextValue, setQRTextValue] = useState('bbb');
+
+    const [currTimeValue, setCurrTimeValue] = useState(new Date())
+
+    const [currTimeStr, setCurrTimeStr] = useState(currTimeValue.toUTCString())
 
     function clickGenerateSecretKey() {
         var randomKey = GenerateBase32SecretKey()
 
         return null;
+    }
+
+    function clickValidate2FA() {
+        return null;
+    }
+
+    function currentTimeString() {
+        const currTime = new Date()
+        const utcStr = currTime.toUTCString()
+        return utcStr
     }
 
 
@@ -28,11 +45,11 @@ export function TOTPTool() {
                 <div id="otp-secret">
                     <div id="qr-code">
                         <div id="otp-qr-code"></div>
-                        <div id="qr-code-text"><span id="otp-qr-code-text">Null</span></div>
+                        <div id="qr-code-text"><span id="otp-qr-code-text">{QRTextValue}</span></div>
                     </div>
                     <div id="key-section">
                         <div id="secret-key-text">
-                            <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text" value={this.secretKeyState.value}></input></span><br/>
+                            <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text" value={secretKeyValue}></input></span><br/>
                         </div>
                         <div class="errorBox">
                             <span></span>
@@ -46,6 +63,29 @@ export function TOTPTool() {
             <div id="validate-totp">
                 <h3>Step 2: Validate 6 Digit Code</h3>
 
+                <div>
+                    <span>Validating against Secret Key: </span>{secretKeyValue}
+                </div>
+
+                <div>
+                    <span>Please enter 6 digit 2FA code: </span><input type="text"></input>
+                    <Button variant="primary" onClick={clickValidate2FA}>Submit</Button>
+                </div>
+
+            </div>
+            <div id="totp-calculator">
+                <h3>Calculations</h3>
+                <div>
+                    <div>
+                        <span>Secret Key is: {secretKeyValue}</span>
+                    </div>
+                    <div>
+                        <span>The current UTC time is: {currTimeStr}</span>
+                    </div>
+                    <div>
+                        <span>Calculating OTP codes for T-90 to T+90 seconds with 30 second intervals.</span>
+                    </div>
+                </div>
 
             </div>
         </div>

@@ -32,3 +32,8 @@
 #generating-qr-code {
     border-bottom: 1px solid #f3f3f3;
 }
+
+#validate-totp {
+    border-bottom: 1px solid #f3f3f3;
+    padding-bottom: 10px;
+}
