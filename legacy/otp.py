@@ -71,7 +71,8 @@ def generate_valid_TOTPs(secret):
             'TOTPcode': code,
             'secretKey': secret,
             'HMACHash': struct.unpack_from(">L", hash)[0],
-            'truncatedHash': struct.unpack(">L", truncatedHash)[0]
+            'truncatedHash': struct.unpack(">L", truncatedHash)[0],
+            'hopCount':  UNIXTimeHops + currHopCount
         })
     
     print(TOTPs)

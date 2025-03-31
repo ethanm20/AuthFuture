@@ -1,32 +1,31 @@
-import Container from 'react-bootstrap/Container';
+//import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 
 import { Outlet } from 'react-router-dom';
 
+import { Container, Row, Col, Button} from 'react-bootstrap';
+
 export function NavigationBar() {
     return (
         <>
-          <Navbar bg="light" data-bs-theme="light" className="bg-body-tertiary" width="100%">
+          <Navbar variant="dark" sticky="top" expand="lg" width="100%" style={{top: '0px', zIndex: '30', marginTop:' -49px', height: '50px', backgroundColor: '#111111'}}>
             <Container>
-              <Navbar.Brand href="/">AuthFuture</Navbar.Brand>
-              <Nav className="me-auto">
-                <Nav.Link href="/">Home</Nav.Link>
-                <NavDropdown title="Authentication Methods" id="basic-nav-dropdown">
-                  <NavDropdown.Item href="/password-authentication">Passwords</NavDropdown.Item>
-                  <NavDropdown.Item href="/webauthn-description">WebAuthn</NavDropdown.Item>
-                  <NavDropdown.Item href="/totp">TOTP</NavDropdown.Item>
-                  <NavDropdown.Item href="/tokens">Tokens</NavDropdown.Item>
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item href="/history">History</NavDropdown.Item>
-                </NavDropdown>
-                <NavDropdown title="Tools" id="basic-nav-dropdown">
-                  <NavDropdown.Item href="/totp-tool">TOTP 2FA</NavDropdown.Item>
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item href="/webauthn-tool">WebAuthn</NavDropdown.Item>
-                </NavDropdown>
-                <Nav.Link href="#link">Blog</Nav.Link>
+              <Navbar.Brand href="/" style={{display: 'flex'}}>AuthFuture</Navbar.Brand>
+              <Nav className="me-auto" style={{justifyContent: 'end', flexDirection: 'row', display: 'flex', width: '100%'}}>
+                  <Nav.Item>
+                    <Nav.Link href="https://www.github.com/ethanm20" target="_blank">
+                      <Button variant="outline-light" style={{borderRadius: '25px'}}>
+                        <i class="bi bi-github"></i> Source Code
+                      </Button>
+                    </Nav.Link>
+                  </Nav.Item>
+                  <Nav.Item>
+                    <Nav.Link href="https://www.linkedin.com/in/ethan-marlow" target="_blank">
+                      <i class="bi bi-moon"></i>
+                    </Nav.Link>
+                  </Nav.Item>
               </Nav>
             </Container>
           </Navbar>

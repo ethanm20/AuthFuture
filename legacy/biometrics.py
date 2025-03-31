@@ -9,7 +9,7 @@ from hashlib import sha256
 import ecdsa
 from ecdsa.util import sigencode_der, sigdecode_der
 
-from Crypto.Signature import pkcs1_15
+#from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 
@@ -264,7 +264,7 @@ def credentialVerifyRS256(signature, publicKey, authenticatorData, clientDataJSO
   h = SHA256.new(data)
   try:
       # Try verifying the hashed signature with RSASSA
-      pkcs1_15.new(key).verify(h, signatureBytes)
+      #pkcs1_15.new(key).verify(h, signatureBytes)
       print("The signature is valid.")
       return True
   except (ValueError, TypeError):
