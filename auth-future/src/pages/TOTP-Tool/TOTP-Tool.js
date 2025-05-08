@@ -7,7 +7,14 @@ import { useState, useEffect } from 'react';
 
 import base64 from 'crypto-js/enc-base64';
 
-import hmac from 'crypto-js/hmac-sha256';
+//import hmac from 'crypto-js/hmac-sha256';
+
+import hmac from 'crypto-js/hmac-sha1';
+import { arrayBufferToBase64 } from '../WebAuthn-Tool/utilities/base64';
+
+const Long = require("long");
+
+const base32 = require('base32.js');
 
 export function TOTPTool() {
     const [secretKeyValue, setSecretKey] = useState(GenerateBase32SecretKey());
@@ -29,6 +36,8 @@ export function TOTPTool() {
     const [QRUsername, setQRUsername] = useState('random@random.com')
 
     const [QRDetailsModalShow, setQRDetailsModalShow] = useState(false);
+
+
 
     const initialTOTPList = [
         {'id': 0,
@@ -134,8 +143,76 @@ export function TOTPTool() {
       
         return () => clearInterval(interval);
       }, []);
+    
+    function encodeLongLongInt(valueStr) {
+        const longVal = Long.fromString(valueStr); // Supports large integers
+        const bytes = longVal.toBytesBE(); // Big-endian byte array (8 bytes)
 
-    function updateTOTPCalculation() {
+        return Uint8Array.from(bytes);
+    }
+
+    function decodeBase32ToArrayBuffer(base32Str) {
+        const decoder = new base32.Decoder();
+        const uint8Array = decoder.write(base32Str).finalize();
+
+        const newArrayBuffer = new Uint8Array(uint8Array).buffer
+
+        console.log('UINT8')
+        console.log(uint8Array)
+        console.log(typeof uint8Array)
+        console.log('Buffer')
+        console.log(newArrayBuffer)
+        // Convert Uint8Array to ArrayBuffer
+
+        return newArrayBuffer
+    }
+      
+
+    async function hmacSha1(key, countInt) {
+        ///const encoder = new TextEncoder();
+
+        console.log('Keey')
+        console.log(key)
+        const keyRawBytes = decodeBase32ToArrayBuffer(key)
+
+        console.log('Buffer3')
+        console.log(keyRawBytes)
+      
+        // Import the secret key
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw', 
+          keyRawBytes, 
+          { name: 'HMAC', hash: 'SHA-1' }, 
+          false, 
+          ['sign']
+        );
+
+        console.log('AFTER8')
+      
+        // Sign the message using the key
+        const signature = await crypto.subtle.sign(
+          'HMAC', 
+          cryptoKey, 
+          encodeLongLongInt(String(countInt))
+        );
+      
+        // Convert ArrayBuffer to hex string
+        const hashArray = Array.from(new Uint8Array(signature));
+
+        console.log('KEY')
+        console.log(key)
+
+        console.log('HOP COUNT')
+        console.log(countInt)
+
+        console.log('FINAL HASH B64')
+        console.log(arrayBufferToBase64(hashArray))
+      
+        return hashArray;
+    }
+
+
+    async function updateTOTPCalculation() {
         //Update global time
         const timeEpoch = Date.now()
         setCurrTimeEpoch(timeEpoch)
@@ -144,11 +221,21 @@ export function TOTPTool() {
 
         const TOTPTimeOffsets = [-90, -60, -30, 0, 30, 60, 90]
 
-        TOTPTimeOffsets.forEach((item, idx) => {
+        for (let idx=0; idx <= 6; idx++) {
+            const item = TOTPTimeOffsets[idx]
+
+            let name = ""
+            if (TOTPTimeOffsets[idx] < 0) {
+                name = 'T' + parseInt(item) + 's'
+            } else if (TOTPTimeOffsets[idx] > 0) {
+                name = 'T+' + parseInt(item) + 's'
+            } else {
+                name = 'Now'
+            }
             //Step 0 Initialisation
             TOTPListNew.push({
                 'id': idx,
-                'name': 'T' + parseInt(item),
+                'name': name,
                 'timeOffset': item,
                 'epochTime': timeEpoch + (item * 1000),
                 'strTime': '',
@@ -162,9 +249,11 @@ export function TOTPTool() {
                 'truncatedByte2': null,
                 'truncatedByte3': null,
                 'truncatedByte4': null,
+                'truncatedHash': null,
+                'truncatedBytes': null,
                 'longTOTPCode': null,
-                'shortTOTPCode': null,
-                'shortTOTPCodeFormatted': null
+                'shortTOTPCode': 111111,
+                'shortTOTPCodeFormatted': "111111"
             })
 
             //Step 1 & Step 2: Update Time for Item
@@ -174,40 +263,76 @@ export function TOTPTool() {
             TOTPListNew[idx].hopCount = parseInt((TOTPListNew[idx].epochTime / 1000) / 30)
 
             //Step 4: Encode hop count as long long int
+            
 
 
             //Step 5: HMAC Hash
-            TOTPListNew[idx].hmacSig = hmac(TOTPListNew[idx].hopCount.toString(), secretKeyValue);
-            let binaryStr = atob(TOTPListNew[idx].hmacSig.toString(base64))
+            //TOTPListNew[idx].hmacSig = hmac(TOTPListNew[idx].hopCount.toString(), secretKeyValue);
+            
+
+            
+            TOTPListNew[idx].hmacSig = await hmacSha1(secretKeyValue, TOTPListNew[idx].hopCount)
+
+            //const asciiHash = atob(arrayBufferToBase64(hmacSig));
+            TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig));
+
+            // Get last character (each char = 1 byte)
+            //const lastByte = asciiHash[asciiHash.length - 1].charCodeAt(0);
+            TOTPListNew[idx].lastByte = TOTPListNew[idx].asciiHash[TOTPListNew[idx].asciiHash.length - 1].charCodeAt(0);
+
+            // Convert char to byte value (0–255)
+            console.log('LastByte')
+            console.log(TOTPListNew[idx].lastByte)
+
+            //const offset = lastByte & 0x0F
+            TOTPListNew[idx].offset = TOTPListNew[idx].lastByte & 0x0F
+
+            console.log('Offset')
+            console.log(TOTPListNew[idx].offset)
+
+            //const truncatedHash = hmacSig.slice(offset, (offset + 4))
+            TOTPListNew[idx].truncatedHash = TOTPListNew[idx].hmacSig.slice(TOTPListNew[idx].offset, (TOTPListNew[idx].offset + 4))
+
+            console.log('Truncated Hash')
+            console.log(TOTPListNew[idx].truncatedHash)
 
 
+            //Long Code
+            //let truncatedBytes = new Uint8Array(truncatedHash)
 
-            TOTPListNew[idx].decimal = 0
-            for (let i = 0; i < binaryStr.length; i++) {
-                // Convert each character in the binary string to its byte value
-                TOTPListNew[idx].decimal = TOTPListNew[idx].decimal * 256 + binaryStr.charCodeAt(i); // 256 is used as each character represents one byte
-              }
+            TOTPListNew[idx].truncatedBytes = new Uint8Array(TOTPListNew[idx].truncatedHash)
+
+            console.log('Truncated Bytes')
+            console.log(TOTPListNew[idx].truncatedBytes)
+
+            const dataView = new DataView(TOTPListNew[idx].truncatedBytes.buffer, TOTPListNew[idx].truncatedBytes.byteOffset, TOTPListNew[idx].truncatedBytes.byteLength);
+            let code = dataView.getUint32(0, false); 
+            TOTPListNew[idx].longTOTPCode = code & 0x7FFFFFFF;
+
+            console.log('Long Code')
+            console.log(TOTPListNew[idx].longTOTPCode)
+
+            TOTPListNew[idx].shortTOTPCode  = TOTPListNew[idx].longTOTPCode % (10 ** 6)
+
+            console.log('Short Code')
+            console.log(TOTPListNew[idx].shortTOTPCode )
 
 
-            //Step 6: Calculate Offset
-            //TOTPListNew[idx].offset = (285 >> 2);
+            TOTPListNew[idx].shortTOTPCodeFormatted = String(TOTPListNew[idx].shortTOTPCode).padStart(6, '0');
 
-            //TOTPListNew[idx].offset = (12285 & 0xFF) & 0x0F;
+           
 
-            //TOTPListNew[idx].offset = (Number(parseInt(TOTPListNew[idx].hmacSig, 16)) & 0xFF) & 0x0F;
+            
 
-            //TOTPListNew[idx].offset = Number(parseInt(TOTPListNew[idx].hmacSig, 16)) ;
+            //TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
+            
+            //TOTPListNew[idx].hmacSig = hmacSig
+            
+                /*TOTPListNew[idx].hmacSig = hmac
 
-            /*
-            ------------------------------
-            {item.hmacSig.toString(base64).slice(-1)}
-            |------------------------------
-            {atob(item.hmacSig).at(-1).charCodeAt(0) & 0x0F}
-            -------------------------------
-            {atob(item.hmacSig).charCodeAt(-1) & 0x0F}
-            */
+                TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
 
-            TOTPListNew[idx].asciiHash = atob(TOTPListNew[idx].hmacSig)
+            
 
             TOTPListNew[idx].lastByte = TOTPListNew[idx].asciiHash.at(-1).charCodeAt(0)
 
@@ -232,7 +357,7 @@ export function TOTPTool() {
 
             let encoder = new TextEncoder();
             let encodedHashArray = encoder.encode(TOTPListNew[idx].truncatedHashAscii)
-            console.log(encodedHashArray)
+            //console.log(encodedHashArray)
             let buffer = encodedHashArray.buffer;
             let view = new DataView(buffer);
             TOTPListNew[idx].longTOTPCode = view.getUint32(0);
@@ -245,8 +370,86 @@ export function TOTPTool() {
 
             //Step 10: Formatting
             TOTPListNew[idx].shortTOTPCodeFormatted = TOTPListNew[idx].shortTOTPCode.toString().padStart(6, '0');
+            })
+            */
 
-        })
+            /*
+            console.log('HMAC SIG')
+            console.log(TOTPListNew[idx].hmacSig)
+            console.log(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
+            let binaryStr = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
+            //let binaryStr = "a"
+
+            
+
+            TOTPListNew[idx].decimal = 0
+            for (let i = 0; i < binaryStr.length; i++) {
+                // Convert each character in the binary string to its byte value
+                TOTPListNew[idx].decimal = TOTPListNew[idx].decimal * 256 + binaryStr.charCodeAt(i); // 256 is used as each character represents one byte
+              }
+
+
+            //Step 6: Calculate Offset
+            //TOTPListNew[idx].offset = (285 >> 2);
+
+            //TOTPListNew[idx].offset = (12285 & 0xFF) & 0x0F;
+
+            //TOTPListNew[idx].offset = (Number(parseInt(TOTPListNew[idx].hmacSig, 16)) & 0xFF) & 0x0F;
+
+            //TOTPListNew[idx].offset = Number(parseInt(TOTPListNew[idx].hmacSig, 16)) ;
+            */
+            /*
+            ------------------------------
+            {item.hmacSig.toString(base64).slice(-1)}
+            |------------------------------
+            {atob(item.hmacSig).at(-1).charCodeAt(0) & 0x0F}
+            -------------------------------
+            {atob(item.hmacSig).charCodeAt(-1) & 0x0F}
+            */
+            /*
+            TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
+
+            console.log('ASCII hash')
+            console.log(TOTPListNew[idx].asciiHash)
+
+            TOTPListNew[idx].lastByte = TOTPListNew[idx].asciiHash.at(-1).charCodeAt(0)
+
+            TOTPListNew[idx].offset = TOTPListNew[idx].lastByte & 0x0F;
+
+            // & 0x0F
+
+            //Setp 7: Trucated Hash
+            TOTPListNew[idx].truncatedHashAscii = TOTPListNew[idx].asciiHash.slice(TOTPListNew[idx].offset, (TOTPListNew[idx].offset + 4))
+
+            TOTPListNew[idx].truncatedByte1 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(0)
+            TOTPListNew[idx].truncatedByte2 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(1)
+            TOTPListNew[idx].truncatedByte3 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(2)
+            TOTPListNew[idx].truncatedByte4 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(3)
+
+            //Step 8: Long TOTP Code
+            TOTPListNew[idx].longTOTPCode = 0
+            for (let i = 0; i < 3; i++) {
+                // Convert each character to its ASCII value and concatenate
+                TOTPListNew[idx].longTOTPCode += TOTPListNew[idx].truncatedHashAscii.charCodeAt(i);
+            }
+
+            let encoder = new TextEncoder();
+            let encodedHashArray = encoder.encode(TOTPListNew[idx].truncatedHashAscii)
+            //console.log(encodedHashArray)
+            let buffer = encodedHashArray.buffer;
+            let view = new DataView(buffer);
+            TOTPListNew[idx].longTOTPCode = view.getUint32(0);
+
+            
+
+            //Step 9: Short TOTP Code
+            TOTPListNew[idx].shortTOTPCode = TOTPListNew[idx].longTOTPCode & 0x7FFFF;
+            TOTPListNew[idx].shortTOTPCode = TOTPListNew[idx].longTOTPCode % (10 ** 6);
+
+            //Step 10: Formatting
+            TOTPListNew[idx].shortTOTPCodeFormatted = TOTPListNew[idx].shortTOTPCode.toString().padStart(6, '0');
+            */
+        }
         
         //try {
         setTOTPList(TOTPListNew)
@@ -284,66 +487,121 @@ export function TOTPTool() {
         return epochTime
     }
 
+    function renderBits(number) {
+        const binaryString = number.toString(2).padStart(8, '0');
+        const bits = binaryString.split('');
+
+        return (
+            <div style={{ display: 'flex', gap: '2px' }}>
+            {bits.map((bit, index) => (
+                <div
+                key={index}
+                style={{
+                    border: '1px solid black',
+                    padding: '0px',
+                    width: '20px',
+                    textAlign: 'center',
+                    fontFamily: 'monospace'
+                }}
+                >
+                {bit}
+                </div>
+            ))}
+            </div>
+        );
+
+    }
+
+    function renderBytes(byteUint8Array) {
+        //const binaryString = number.toString(2).padStart(8, '0');
+        //const bits = binaryString.split('');
+        const byteArray = Array.from(byteUint8Array)
+
+        return (
+            <div style={{ display: 'flex', gap: '2px' }}>
+            {byteArray.map((bit, index) => (
+                <div
+                key={index}
+                style={{
+                    border: '1px solid black',
+                    padding: '0px',
+                    width: '50px',
+                    textAlign: 'center',
+                    fontFamily: 'monospace'
+                }}
+                >
+                {bit}
+                </div>
+            ))}
+            </div>
+        );
+
+    }
+
     function renderIntervalMoreDetails(item) {
         if (openIntervalTabNo === item.id || (1 === 1)) {
             return (
                 <>
                     <div>
-                        <h4>Step 1: Get Time For {item.name}</h4>
-                        <span>Time ({item.name}): {item.strTime}</span>
 
-                        <h4>Step 2: Convert Time to Epoch Time</h4>
-                        <span>We now calculate Epoch UNIX time. (Number of seconds since midnight January 1st 1970)</span>
-                        Epoch Time Value: {(item.epochTime / 1000)}
+                        <h4>Part 1: Calculate Hop Count</h4>
+                        <p>Calculate the number of 30 second intervals (hops) since <b>Epoch Time</b> (midnight Jan 1, 1970 UTC) to <b>{item.name}</b>.</p>
+                        
+                        <span><b>Time ({item.name}):</b> {item.strTime}</span><br/>
 
-                        <h4>Step 3: Divide this Time by the Interval (30 Seconds)</h4>
-                        Hop Count = Epoch Time Value / 30 seconds = {item.hopCount}
+                        <span><b>Time since Epoch:</b> {(item.epochTime / 1000)} seconds</span><br/>
 
-                        <h4>Step 4: Encode as a Long Long Integer</h4>
-                        Hop Count (as Bytes) = 
+                        <b>Hop Count</b> = Time Since Epoch / 30 seconds <br/> 
+                                  = {(item.epochTime / 1000)} seconds / 30 seconds <br/>
+                                  = {item.hopCount}
+                        <br/>
+                        <br/>
+                        <h4>Part 2: HMAC-SHA1 Hash</h4>
+                        <p>Calculate the HMAC-SHA1 hash of the <b>Hop Count</b> using the <b>Secret Key</b>.</p>
+                        <b>Hop Count: </b> {item.hopCount}<br/>
+                        <b>Secret Key: </b> {secretKeyValue}<br/>
+                        <b>HMAC-SHA1 Hash (Base64):</b> HMAC-SHA1(Secret Key, Hop Count) <br/>
+                        = {arrayBufferToBase64(item.hmacSig)} <br/>
+                        <br/>
+                        {renderBytes(item.hmacSig)}
+                        <br/>
+                        <h4>Part 3: Calculate Offset</h4>
+                        <p>Offset is the <b>last 4 bits of the HMAC-SHA1 hash</b>.</p>
 
-                        <h4>Step 5: Get HMAC-SHA1 hash of Secret Key and Hop Count Bytes</h4>
-                        {item.decimal}<br/>
-                        {item.hmacSig.toString(base64)}<br/>
-                        HMAC-SHA1 Hash (Base64): {item.hmacSig.toString(base64)}
-                        Binary: {Number(parseInt(item.hmacSig, 16))}
-                        Bin 2: {Number(parseInt(item.hmacSig, 16)) & 0xFF}
-                        Bin 3: {0 & 0xFF}
-                        <h4>Step 6: Calculate Offset</h4>
-                        HMAC-SHA1 Hash (Base64): {item.hmacSig.toString(base64)} <br/>
-                        Decoding the Base64 Hash: {item.asciiHash} <br/>
-                        Last Byte of Hash in Decimal is: {item.asciiHash.at(-1)} = {item.lastByte} <br/>
-                        Offset Value: Last Byte & 0x0F = {item.lastByte} & 0x0F = 
-                         {item.offset} 
+                        HMAC Hash (Raw ASCII): {item.asciiHash} <br/>
+                        <br/>
+                        <b>Last Byte of HMAC-SHA1:</b> {item.lastByte}   {renderBits(item.lastByte)}
+                        <br/>
+                        <b>Offset:</b> Extract last 4 bits of last byte<br/>
+                        = Last Byte & 0x0F<br/> 
+                        = {item.lastByte} & 0x0F<br/> 
+                        = {item.offset}       <br/>
+                        {renderBits(item.offset)}
+                        <br/>
+                        <br/>
 
-
-
-                        <h4>Step 7: Truncated Hash</h4>
+                        <h4>Part 4: Truncated Hash</h4>
+                        <p>Truncated Hash is a 4 byte extraction of the HMAC-SHA1 hash starting from the Offset index.</p>
                         Decoded Base64 Hash: {item.asciiHash} <br/>
 
                         Truncated Hash = SHA1-Hash[Offset: (Offset + 4)] <br/>
                                        = SHA1-Hash[{item.offset} : ({item.offset} + 4)] <br/>
                                        = SHA1-Hash[{item.offset} : {item.offset + 4}] <br/>
-                                       = {item.truncatedHashAscii}
+                                       {renderBytes(item.truncatedBytes)}
+                        <br/>
+                        <br/>
+                        <h4>Part 5: Long TOTP Code</h4>
+                        <p>Long TOTP code calculated by converting the <b>4-byte Truncated Hash</b> to a single <b>Unsigned 32-bit Integer</b>.</p>
 
-                        <h4>Step 8: Long TOTP Code</h4>
-                        Converting the 4 byte truncated hash to decimal for each byte
-                        
-                        Truncated Hash Characters = {item.truncatedHashAscii}<br/>
+                        <b>Long TOTP Code:</b> {item.longTOTPCode}<br/>
 
-                        Decoding with ASCII to Decimal: {item.truncatedByte1} {item.truncatedByte2} {item.truncatedByte3} {item.truncatedByte4}<br/>
+                        <br/>
+                        <br/>
 
-                        Long TOTP Code: {item.longTOTPCode}
+                        <h4>Part 6: Short TOTP Code</h4>
+                        <p>Extract only the last 6 digits for standard TOTP authenticator format.</p>
 
-                        <h4>Step 9: Short TOTP Code</h4>
-                        We only want the last 6 digits<br/>
-
-                        Short TOTP Code: {item.shortTOTPCode}
-
-                        <h4>Step 10: Formatting</h4>
-                        Pad with zeros if value is less than 1000
-
-                        Final TOTP Code: {item.shortTOTPCodeFormatted}
+                        <b>Short TOTP Code:</b> {item.shortTOTPCodeFormatted} <br/>
                     </div>
                 </>
             )
@@ -356,7 +614,7 @@ export function TOTPTool() {
             TOTPList.map((item) => (
                 <>
                     <Accordion.Item class="interval-item" id={"interval-id" + item.id} eventKey={item.id}>
-                        <Accordion.Header>{item.name}   |  {item.shortTOTPCodeFormatted.slice(0, 3)}-{item.shortTOTPCodeFormatted.slice(3, 6)}</Accordion.Header>
+                        <Accordion.Header><div style={{border: '1px solid #000', borderRadius: '5px', width: '75px'}}><i class="bi bi-clock"></i> {item.name}</div>     <b>{item.shortTOTPCodeFormatted.slice(0, 3)} {item.shortTOTPCodeFormatted.slice(3, 6)}</b></Accordion.Header>
                         <Accordion.Body>
                             {renderIntervalMoreDetails(item)}
                         </Accordion.Body>

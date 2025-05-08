@@ -6,19 +6,6 @@ import time
 
 import secrets
 
-
-
-#Creating the Secret Key
-# Secret Key Needs to be a Base32 String
-# This Secret Key will be stored for verifying TOTPs in the future
-# The user needs this Secret Key via the QR Code to generate their TOTPs
-def generate_secret_key():
-    secret_raw = secrets.token_hex(16)
-    secret_bytes = secret_raw.encode('UTF-8')
-    b32_secret = base64.b32encode(secret_bytes)
-    b32_secret_string = b32_secret.decode('UTF-8')
-    return b32_secret_string
-
 #Calculating the Valid TOTPs for the Current Time +/- 90seconds
 def generate_valid_TOTPs(secret):
     # Decoding the Base32 Secret Key into Bytes
@@ -42,7 +29,7 @@ def generate_valid_TOTPs(secret):
         # Getting the HMAC-SHA1 hash of Secret Key & Interval (as Bytes)
         hash = hmac.HMAC(key, hopCountBytes, hashlib.sha1).digest()
         print('HMAC')
-        print(hash)
+        print(base64.b64encode(hash).decode('utf-8'))
 
         #Truncating the Hash
 
@@ -50,6 +37,13 @@ def generate_valid_TOTPs(secret):
         # then performing a Bitwise AND operation with 0F (corresponds to 1111 in binary)
         # This effectively means that the offset is the last 4 bits of the hash
         offset = hash[-1] & 0x0F
+
+        print('Last Byte')
+        print(hash[-1])
+
+        print('Offset')
+        print(offset)
+
         # The truncated hash is is then the bytes from the offset index to the (offset index + 4), i.e. truncated hash is 4 bytes (or 32 bits)
         truncatedHash = hash[offset:offset + 4]
         print('Truncated Hash')
@@ -59,6 +53,10 @@ def generate_valid_TOTPs(secret):
         code = struct.unpack(">L", truncatedHash)[0]
         # We Now do a Bitwise AND operation 7FFFFFF corresponds to (1111111111111111111111111111111) a 32 bit signed number in binary to excise any extra bits
         code &= 0x7FFFFFFF
+
+        print('Long Code')
+        print(code)
+
         # Gets Last 6 Digits of result (by using the mod function)
         code %= 10 ** 6
 
@@ -81,11 +79,7 @@ def generate_valid_TOTPs(secret):
     print(TOTPs)
     return TOTPs
 
-# Check if a TOTP valid
-# Simply execute above function and if the TOTP is in the list of 7 valid TOTPs, return True
-def check_totp_valid(secret, token):    
-    for TOTPdetails in generate_valid_TOTPs(secret):
-        if (token == TOTPdetails['TOTPcode']): 
-            return True
-    
-    return False
+while True:
+    secret = "NVKUYRTKKZBDATSIPBAVUZ2GHAYDK2KHNVWWQSRTMVXVQWLROZGQ===="
+    generate_valid_TOTPs(secret)
+    time.sleep(30)  # Wait for 10 seconds

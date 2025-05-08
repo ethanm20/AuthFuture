@@ -1,3 +1,12 @@
+/*
+module.exports = {
+  resolve: {
+    fallback: {
+        "stream": require.resolve("stream-browserify")
+    }
+  }
+}
+*/
 
 /*
 const path = require('path');
@@ -29,7 +38,7 @@ resolve: {
 
 */
 
-
+/*
 
 const path = require("path");
 const webpack = require("webpack");
@@ -43,8 +52,9 @@ module.exports = {
   mode: "development", // Change to 'production' for optimized builds
   resolve: {
     fallback: {
-      crypto: require.resolve("crypto-browserify"),
-      buffer: require.resolve("buffer/"),
+      "crypto": require.resolve("crypto-browserify"),
+      "buffer": require.resolve("buffer/"),
+      "stream": require.resolve("stream-browserify")
     },
   },
   module: {
@@ -73,3 +83,4 @@ module.exports = {
     port: 9000,
   },
 };
+*/

@@ -21,7 +21,7 @@ import { Theme } from "@radix-ui/themes";
 function App() {
   return (
     <Theme>
-      <div className="App">
+      <div className="App"> 
         <header className="App-header">
           <BrowserRouter>
             <Routes>
