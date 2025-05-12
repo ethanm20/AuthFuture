@@ -15,7 +15,7 @@ export function NavigationBar() {
               <Navbar.Brand href="/" style={{display: 'flex'}}>AuthFuture</Navbar.Brand>
               <Nav className="me-auto" style={{justifyContent: 'end', flexDirection: 'row', display: 'flex', width: '100%'}}>
                   <Nav.Item>
-                    <Nav.Link href="https://www.github.com/ethanm20" target="_blank">
+                    <Nav.Link href="https://github.com/ethanm20/AuthFuture" target="_blank">
                       <Button variant="outline-light" style={{borderRadius: '25px'}}>
                         <i class="bi bi-github"></i> Source Code
                       </Button>

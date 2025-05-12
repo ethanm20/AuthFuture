@@ -560,16 +560,14 @@ export function TOTPTool() {
                         <p>Calculate the HMAC-SHA1 hash of the <b>Hop Count</b> using the <b>Secret Key</b>.</p>
                         <b>Hop Count: </b> {item.hopCount}<br/>
                         <b>Secret Key: </b> {secretKeyValue}<br/>
+                        <br/>
                         <b>HMAC-SHA1 Hash (Base64):</b> HMAC-SHA1(Secret Key, Hop Count) <br/>
                         = {arrayBufferToBase64(item.hmacSig)} <br/>
                         <br/>
                         {renderBytes(item.hmacSig)}
                         <br/>
                         <h4>Part 3: Calculate Offset</h4>
-                        <p>Offset is the <b>last 4 bits of the HMAC-SHA1 hash</b>.</p>
-
-                        HMAC Hash (Raw ASCII): {item.asciiHash} <br/>
-                        <br/>
+                        <p>Offset is the <b>last 4 bits of the above HMAC-SHA1 hash.</b></p>
                         <b>Last Byte of HMAC-SHA1:</b> {item.lastByte}   {renderBits(item.lastByte)}
                         <br/>
                         <b>Offset:</b> Extract last 4 bits of last byte<br/>
@@ -582,8 +580,10 @@ export function TOTPTool() {
 
                         <h4>Part 4: Truncated Hash</h4>
                         <p>Truncated Hash is a 4 byte extraction of the HMAC-SHA1 hash starting from the Offset index.</p>
-                        Decoded Base64 Hash: {item.asciiHash} <br/>
 
+                        Full HMAC-SHA1 Hash (Byte Array):
+                        {renderBytes(item.hmacSig)}
+                        <br/>
                         Truncated Hash = SHA1-Hash[Offset: (Offset + 4)] <br/>
                                        = SHA1-Hash[{item.offset} : ({item.offset} + 4)] <br/>
                                        = SHA1-Hash[{item.offset} : {item.offset + 4}] <br/>
@@ -591,7 +591,8 @@ export function TOTPTool() {
                         <br/>
                         <br/>
                         <h4>Part 5: Long TOTP Code</h4>
-                        <p>Long TOTP code calculated by converting the <b>4-byte Truncated Hash</b> to a single <b>Unsigned 32-bit Integer</b>.</p>
+                        <p>Long TOTP code calculated by representing the <b>4-byte Truncated Hash</b> as a single <b>Unsigned 32-bit Integer</b>.</p>
+                        {renderBytes(item.truncatedBytes)}
 
                         <b>Long TOTP Code:</b> {item.longTOTPCode}<br/>
 

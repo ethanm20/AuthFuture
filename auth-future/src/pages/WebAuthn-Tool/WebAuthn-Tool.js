@@ -3,7 +3,9 @@
 
 import { NavigationBar } from "../../features/NavigationBar/NavigationBar";
 
-import {Button, Container, Modal} from 'react-bootstrap';
+import {Button, Container, Modal, ButtonGroup} from 'react-bootstrap';
+
+import ReactFlow, { ReactFlowProvider }  from 'reactflow';
 
 import hljs from "highlight.js/lib/core";
 import javascript from "highlight.js/lib/languages/javascript";
@@ -25,7 +27,12 @@ import { arrayBufferToBase64 } from "./utilities/base64";
 import Accordion from 'react-bootstrap/Accordion';
 import { Base64Binary, GenerateBase64SecretKey } from "./utilities/base64";
 
+
+
+
 import { Buffer } from 'buffer';
+
+import 'reactflow/dist/style.css';
 
 //const { importSPKI, exportJWK } = require('jose');
 
@@ -63,6 +70,8 @@ export function WebAuthnTool() {
 
 
     const [savedCredentials, setSavedCredentials] = useState([])
+
+    const [passwordlessMode, setPasswordlessMode] = useState(false)
 
     
 
@@ -110,7 +119,7 @@ export function WebAuthnTool() {
             "publicKey": {
                 "challenge": Base64Binary.decode(challenge),
                 "rp": {
-                    "id": "localhost", 
+                    "id": window.location.hostname, 
                     "name": "AuthFuture"
                 },
                 "user": {
@@ -129,11 +138,10 @@ export function WebAuthnTool() {
                     }
                 ],
                 "authenticatorSelection": {
-                    "authenticatorAttachment": "platform",
                     "userVerification": "preferred",
-                    "requireResidentKey": true
+                    "requireResidentKey": false
                 },
-                "excludeCredentials": []
+                "excludeCredentials": getCredentialArray()
             }
         })
         .then((response) => {
@@ -183,7 +191,7 @@ export function WebAuthnTool() {
             savedCredentials.map((item) => (
                 <>
                     <Accordion.Item class="webauthn-item" id={"webauthn-id" + item.idNum} eventKey={item.idNum} style={{width: '100%'}}>
-                        <Accordion.Header>Passkey #{item.idNum}       <span>         </span>        <i>ID: ({item.id})</i> </Accordion.Header>
+                        <Accordion.Header><span>Passkey #{item.idNum}     <i>(ID: {item.id})</i> </span></Accordion.Header>
                         <Accordion.Body style={{textWrap: 'wrap', textWrapStyle: 'pretty', overflowWrap:'break-word'}}>
                             <span><b>Credential ID: </b> {item.id}</span><br/>
 
@@ -196,6 +204,8 @@ export function WebAuthnTool() {
                             <span><b>Algorithm:</b> {item.alg}</span><br/>
 
                             <span><b>Transports: </b> {item.transports}</span><br/>
+
+                            {(item.transports == 'internal') ? <div className="alert alert-success" role="alert">Passkey may be used in passwordless mode</div> : <div className="alert alert-danger" role="alert"><b>External Authenticator:</b> Unable to be used in passwordless mode</div>}
 
 
                         </Accordion.Body>
@@ -244,7 +254,7 @@ export function WebAuthnTool() {
 
                 <h4>Step 1: Generating Passkey From Browser</h4>
 
-                <p><b>Challenge: </b>{challenge}</p> <Button variant="dark" onClick={(event) => {setChallenge(GenerateBase64SecretKey())}}><i class="bi bi-arrow-repeat"></i></Button>
+                <p><b>Challenge: </b>{challenge} <Button variant="dark" onClick={(event) => {setChallenge(GenerateBase64SecretKey())}}><i class="bi bi-arrow-repeat"></i></Button></p>
 
                 <form>
                     <div>
@@ -282,11 +292,10 @@ export function WebAuthnTool() {
                                     }
                                 ],
                                 "authenticatorSelection": {
-                                    "authenticatorAttachment": "platform",
                                     "userVerification": "preferred",
-                                    "requireResidentKey": True
+                                    "requireResidentKey": false
                                 },
-                                "excludeCredentials": []
+                                "excludeCredentials": ${getCredentialArrayStr()}
                             }
                         )
                         `}    
@@ -723,18 +732,31 @@ export function WebAuthnTool() {
             })
         })
 
-        return JSON.stringify(creds)
+        return JSON.stringify(creds, null, 20)
     }
 
     function verifyPasskey() {
-        navigator.credentials.get({
+        let options = {
             "publicKey": {
                 "challenge": Base64Binary.decode(challenge),
-                "rpId": "localhost", 
+                "rpId": window.location.hostname, 
                 "allowCredentials": getCredentialArray(),
                 "userVerification": "preferred",
             }
-        })
+        }
+
+        if (passwordlessMode) {
+            options = {
+                "publicKey": {
+                    "challenge": Base64Binary.decode(challenge),
+                    "rpId": window.location.hostname, 
+                    "userVerification": "preferred",
+                }
+            }
+        }
+
+
+        navigator.credentials.get(options)
         .then((response) => {
             console.log('Assertion')
             console.log(response)
@@ -747,26 +769,18 @@ export function WebAuthnTool() {
                 "userHandle": arrayBufferToBase64(response.response.userHandle)
             })
 
+            setLoginWithPasskeyTab(2)
+
             //verificationCalculations()
         })
 
-        setLoginWithPasskeyTab(2)
+        
 
     }
 
-    function renderPasskeyLoginTabPage1() {
-        return (
-            <>
-
-                <h4>Step 1: Get Passkey Assertion</h4>
-
-                <p><b>Challenge: </b>{challenge}</p> <Button variant="dark" onClick={(event) => {setChallenge(GenerateBase64SecretKey())}}><i class="bi bi-arrow-repeat"></i></Button>
-
-
-                <span>Options provided to browser in navigate.credentials.get()</span>
-                <pre>
-                    <SyntaxHighlighter language="javascript" style={coldarkDark}>
-                        {`
+    function renderLoginRetrievalJSON() {
+        if (passwordlessMode == false) {
+            return `
                         navigator.credentials.get(
                             "publicKey": {
                                 "challenge": Uint8Array.from("${challenge}"),
@@ -775,6 +789,35 @@ export function WebAuthnTool() {
                                 "userVerification": "preferred",
                             }
                         )
+                        `
+        } else {
+            return `
+                        navigator.credentials.get(
+                            "publicKey": {
+                                "challenge": Uint8Array.from("${challenge}"),
+                                "rpId": "authfuture.com", 
+                                "userVerification": "preferred",
+                            }
+                        )
+                        `
+        }
+    }
+
+    function renderPasskeyLoginTabPage1() {
+        return (
+            <>
+
+                <h4>Step 1: Get Passkey Assertion</h4>
+
+                <p><b>Challenge: </b>{challenge}<Button variant="dark" onClick={(event) => {setChallenge(GenerateBase64SecretKey())}}><i class="bi bi-arrow-repeat"></i></Button></p>
+
+                <p><label><input type="checkbox" name="passwordlessMode" checked={passwordlessMode} onChange={(event) => {setPasswordlessMode(event.target.checked)}}/><b> Enable Passwordless Mode</b> (Not available for passkeys with external/non-resident authenticators)</label></p>
+
+                <span>Options provided to browser in navigate.credentials.get()</span>
+                <pre>
+                    <SyntaxHighlighter language="javascript" style={coldarkDark}>
+                        {`
+                        ${renderLoginRetrievalJSON()}
                         `}    
                     </SyntaxHighlighter>
                 </pre>
@@ -791,7 +834,6 @@ export function WebAuthnTool() {
 
                 <h4>Step 2: Assertion Response</h4>
 
-                <span>Options provided to browser in navigate.credentials.get()</span>
                 <pre>
                     <SyntaxHighlighter language="javascript" style={coldarkDark}>
                         {`
@@ -811,15 +853,15 @@ export function WebAuthnTool() {
                     </SyntaxHighlighter>
                 </pre>
                 
-                <span><b>Credential ID: </b> {assertionData.id}</span><br/>
+                <span><b>Assertion Credential ID: </b> {assertionData.id}</span><br/>
 
-                <span><b>User Handle:</b> {assertionData.userHandle}</span><br/>
+                <span><b>Authenticator Data:</b> {assertionData.authenticatorData}</span><br/>
 
-                <span><b>Authenticator Data (Base 64):</b> {assertionData.authenticatorData}</span><br/>
+                <p><b>Assertion Signature:</b> {assertionData.signature}</p><br/>
 
-                <span><b>Signature (Base 64):</b> {assertionData.signature}</span><br/>
+                <span><b>Client Data JSON: </b> {assertionData.clientDataJSON}</span><br/>
+                <span><b>SHA256(ClientDataJSON): </b> {validationCalculations.sha256}</span>
 
-                <span><b>Client Data JSON: </b></span><br/>
                 <pre>
                     <SyntaxHighlighter language="javascript" style={coldarkDark}>
                         {`
@@ -828,6 +870,8 @@ export function WebAuthnTool() {
                     </SyntaxHighlighter>
                 </pre>
 
+                
+
                 <div style={{backgroundColor: 'green', border: '1px solid green', borderRadius: '20px', color: '#FFF', display: 'flex', flexDirection: 'row'}}>
                     <div style={{width: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                         <i class="bi bi-check-circle-fill"></i>
@@ -835,11 +879,11 @@ export function WebAuthnTool() {
                     <div style={{display: 'flex', flexDirection: 'column'}}>
                         <span><h3>Challenge Verified</h3></span>
                         <span><b>Challenge:</b> {challenge}</span>
-                        <span>Set challenge matches challenge returned in Client Data JSON</span>
+                        <span>Set challenge matches challenge returned in Client Data JSON. Prevents replay attacks.</span>
                     </div>
                 </div>
 
-                <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {setLoginWithPasskeyTab(3)}}>Verify</Button>
+                <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {setLoginWithPasskeyTab(3)}}>Next</Button>
             </>
         )
     }
@@ -879,46 +923,154 @@ export function WebAuthnTool() {
         return output
     }
 
+    function getSavedCred(id) {
+         let output = {
+            'publicKey': ""
+        }
+
+        savedCredentials.forEach((cred) => {
+            if (cred.id === id) {
+                output = cred
+            }
+        })
+
+        return output
+
+    }
+
+    function renderLoginPublicKeyJSON() {
+        if (getAlgoDetails(assertionData.id)['algoName'] == 'RS256') {
+            return `
+                        let publicKeyRSA = await crypto.subtle.importKey(
+                            'spki',                // Format of the key
+                            publicKeyRaw,             // ArrayBuffer from PEM
+                            {
+                                name: 'RSASSA-PKCS1-v1_5',  // or 'RSA-PSS'
+                                hash: { name: 'SHA-256' }
+                            },
+                            true,
+                            ['verify']
+                        );
+                        `
+        } else if (getAlgoDetails(assertionData.id)['algoName'] == 'ES256') {
+            return `
+                        let publicKeyECDSA = await crypto.subtle.importKey(
+                            'spki', // Format of the key
+                            publicKeyRaw, // ArrayBuffer from PEM
+                            {
+                                name: 'ECDSA',
+                                namedCurve: 'P-256',
+                                hash: { name: "SHA-256" }   //added
+                            },
+                            false, //true
+                            ['verify']
+                        );
+                        `
+        }
+
+    }
+
+    function renderLoginVerifyJSON() {
+        if (getAlgoDetails(assertionData.id)['algoName'] == 'RS256') {
+            return `
+                        let verified = await crypto.subtle.verify(
+                            {
+                            name: 'RSASSA-PKCS1-v1_5',
+                            hash: { name: 'SHA-256' }
+                            },
+                            Base64.decode(assertation.publicKeyRSA),        // Public Key sourced from Passkey Registration (Assertation stage)
+                            Base64.decode(assertion.signatureRaw),          // Assertion Signature
+                            Base64.decode(assertion.authenticatorDataJSON)  // authData + SHA256(clientDataJSON)
+                        );
+                        `
+        } else if (getAlgoDetails(assertionData.id)['algoName'] == 'ES256') {
+            return `
+                        let verified = await crypto.subtle.verify(
+                                {
+                                    name: 'ECDSA',
+                                    namedCurve: "P-256", //added
+                                    hash: { name: 'SHA-256' }
+                                },
+                                publicKeyECDSA,
+                                rawSignature, // Signature from authenticator
+                                authenticatorDataJSONRaw // authData + SHA256(clientDataJSON)
+                        );
+                        `
+        }
+
+    }
+
     function renderPasskeyLoginTabPage3() {
         return (
             <>
 
-                <h4>Step 3: Verify Assertion Response</h4>
+                <h4>Step 3: Import Public Key of Matched Passkey</h4>
 
-                <h5>Credential Details</h5>
+                <p><b>Assertion Credential ID:</b> {assertionData.id}</p>
 
-                <span><b>Credential ID: </b> {assertionData.id}</span><br/>
-
-                <span><b>Authenticator Data (Base 64):</b> {assertionData.authenticatorData}</span><br/>
-
-                <span><b>Client Data JSON (Base 64):</b> {assertionData.clientDataJSON}</span><br/>
-
-                <span><b>Signature (Base 64):</b> {assertionData.signature}</span><br/>
-
-                <span><b>Public Key (Base 64):</b> </span><br/>
-
-                {getPublicKey(assertionData.id)['publicKey']} <br/>
-
-                <span><b>Public Key Raw:</b></span><br/>
-
-                {atob(getPublicKey(assertionData.id)['publicKey'])}<br/>
-
-                <span><b>Algorithm: </b> {getAlgoDetails(assertionData.id)['algoNum']} ({getAlgoDetails(assertionData.id)['algoName']})</span><br/>
-                <div style={{backgroundColor: 'green', borderRadius: '15px', color: '#FFF'}}>
-                    <h4> <i class="bi bi-check-circle-fill"></i> Assertion Verification</h4>
-                    <div>
-                        <ol>
-                            <li><b>SHA-256 Hash of Client Data JSON:</b> {validationCalculations.sha256}</li>
-                            <li><b>Authenticator Data:</b> </li>
-                            <li><b>Authenticator Data + SHA256(ClientDataJSON):</b> {validationCalculations.authenticatorJSONCombined}</li>
-                            <li>Verified {validationCalculations.verified}</li>
-                            <li><b>Authenticator </b></li>
-                            <li>ID {validationCalculations.id}</li>
-                        </ol>
+                <div style={{backgroundColor: 'green', border: '1px solid green', borderRadius: '20px', color: '#FFF', display: 'flex', flexDirection: 'row'}}>
+                    <div style={{width: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <span><h3>Assertion Credential ID Matched with Passkey #{getSavedCred(assertionData.id).idNum}</h3></span>
+                        <span><b>Passkey #{getSavedCred(assertionData.id).idNum} Credential ID:</b> {assertionData.id}</span>
                     </div>
                 </div>
 
+                <p><b>Passkey #{getSavedCred(assertionData.id).idNum} Public Key: </b> {getPublicKey(assertionData.id)['publicKey']} </p>
+                <pre>
+                    <SyntaxHighlighter language="javascript" style={coldarkDark}>
+                        {`
+                        ${renderLoginPublicKeyJSON()}
+                        `}    
+                    </SyntaxHighlighter>
+                </pre>
+                <br/>
+                <br/>        
+
                <br/>
+
+                <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {setLoginWithPasskeyTab(4)}}>Verify</Button>
+            </>
+        )
+    }
+
+     function renderPasskeyLoginTabPage4() {
+        return (
+            <>
+
+                <h4>Step 4: Verification</h4>
+
+                <p><b>Algorithm:</b> {getAlgoDetails(assertionData.id)['algoName']}</p>
+                <p><b>Passkey #{getSavedCred(assertionData.id).idNum} Public Key: </b> {getPublicKey(assertionData.id)['publicKey']} </p>
+                <p><b>Authenticator Data + SHA256(ClientDataJSON):</b> {validationCalculations.authenticatorJSONCombined}</p>
+                <p><b>Assertion Signature:</b> {validationCalculations.signature}</p>
+
+                <pre>
+                    <SyntaxHighlighter language="javascript" style={coldarkDark}>
+                        {`
+                        let verified = await crypto.subtle.verify(
+                            {
+                            name: 'RSASSA-PKCS1-v1_5',
+                            hash: { name: 'SHA-256' }
+                            },
+                            Base64.decode(assertation.publicKeyRSA),        // Public Key sourced from Passkey Registration (Assertation stage)
+                            Base64.decode(assertion.signatureRaw),          // Assertion Signature
+                            Base64.decode(assertion.authenticatorDataJSON)  // authData + SHA256(clientDataJSON)
+                        );
+                        `}    
+                    </SyntaxHighlighter>
+                </pre>      
+                <div style={{backgroundColor: 'green', border: '1px solid green', borderRadius: '20px', color: '#FFF', display: 'flex', flexDirection: 'row'}}>
+                    <div style={{width: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <span><h3>Passkey Login Successful - Assertion Verified</h3></span>
+                        <span><b>Assertion Signature</b> decrypted with <b>Passkey #{getSavedCred(assertionData.id).idNum} Public Key</b> using <b>{getAlgoDetails(assertionData.id)['algoName']}</b> = SHA-256 Hash of <b>AuthenticatorData + SHA256(ClientDataJSON)</b></span>
+                    </div>
+                </div>  
 
                 <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {setLoginWithPasskeyTab(0)}}>Finish</Button>
             </>
@@ -955,7 +1107,47 @@ export function WebAuthnTool() {
                     {renderPasskeyLoginTabPage3()}
                 </>
             )
-        } 
+        } else if (loginWithPasskeyTab === 4) {
+            return (
+                <>
+                    {passkeyVerifyTabTitle()}
+                    {renderPasskeyLoginTabPage4()}
+                </>
+            )
+        }
+    }
+
+    const nodes = [
+        {
+            id: '1',
+            type: 'input',
+            position: { x: 0, y: 0 },
+            data: { label: 'Start' },
+        },
+    ];
+
+    const edges = [];
+
+
+    function passkeyExplanation() {
+                
+        return (
+            <>
+                <div style={{display: 'flex', flexDirection: 'column'}}>
+                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%'}}> 
+                        <ButtonGroup aria-label="Basic example">
+                            <Button variant="secondary">Passkey Registration (Assertation)</Button>
+                            <Button variant="secondary">Passkey Verification (Assertion)</Button>
+                        </ButtonGroup>
+                    </div>
+                    <div style={{width: '100%'}}>
+                        <ReactFlowProvider>
+                            <ReactFlow nodes={nodes} edges={edges} fitView/>
+                        </ReactFlowProvider>
+                    </div>
+                </div>
+            </>
+        )
     }
 
     return (
@@ -965,18 +1157,23 @@ export function WebAuthnTool() {
                 <link rel="stylesheet" href="/css/webauthn-tool.css"></link>
 
                 <h2>WebAuthn Passkeys</h2>
+                <div id="webauthn-explanation-container">
+                    {passkeyExplanation()}
+                </div>
 
-                <div id="webauthn-tool-container" style={{border: '1px solid #000'}}>
+                <h2>Passkeys Demo</h2>
+
+                <div id="webauthn-tool-container" style={{}}>
                     
 
                     <div id="webauthn-register" style={{borderBottom: '1px solid #000'}}>
                         <h3><i class="bi bi-sliders"></i> Configure Passkeys</h3>
 
-                        <div id>
+                        <div>
                             <div id="passkey-list" style={{paddingBottom: '20px'}}>
                                 {renderListRegisteredPasskeys()}
                             </div>
-                            <div id="passkey-register-tab" style={{border: '2px solid #000', backgroundColor: 'transparent'}}>
+                            <div id="passkey-register-tab" style={{backgroundColor: 'transparent'}}>
                                 {renderPasskeyRegisterTab()}
                             </div>
                             {(() => {
@@ -987,7 +1184,7 @@ export function WebAuthnTool() {
                                     )
                                 } else {
                                     return (
-                                        <Button variant="dark" onClick={toggleRegisterNewPasskeyTab}>Add New Passkey</Button>
+                                        <Button variant="dark" onClick={toggleRegisterNewPasskeyTab}><i class="bi bi-plus-circle"></i> Add New Passkey</Button>
                                     )
                                 }
                             })()}
@@ -996,15 +1193,26 @@ export function WebAuthnTool() {
                         
                     </div>
                     <div id="webauthn-login">
-                        <h3>Login with Passkey</h3>
+                        <h3><i class="bi bi-box-arrow-in-right"></i> Login with Passkey</h3>
 
                         {renderLoginPasskeyTab()}
                         
                         {(() => {
                             if (loginWithPasskeyTab === 0) {
-                                return (
-                                <Button onClick={togglePasskeyLoginTab} variant="dark">Start</Button>
-                                )
+                                if (savedCredentials.length > 0) {
+                                    return (
+                                    <Button onClick={togglePasskeyLoginTab} variant="dark">Start</Button>
+                                    )
+                                } else {
+                                    return (
+                                        <>
+                                            <div style={{display: 'flex', flexDirection: 'column'}}>
+                                                <span style={{color: 'red', fontSize: '18px'}}><i class="bi bi-exclamation-circle"></i> No passkeys configured</span>
+                                                <div><Button variant="dark" disabled >Start</Button></div>
+                                            </div>
+                                        </>
+                                    )
+                                }
                             }
                         })()}
                     </div>
