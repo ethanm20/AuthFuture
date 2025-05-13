@@ -3,7 +3,7 @@ import {Button, Container, Modal} from 'react-bootstrap';
 import Accordion from 'react-bootstrap/Accordion';
 
 import { GenerateBase32SecretKey } from './utilities/generate-base-32-key';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import base64 from 'crypto-js/enc-base64';
 
@@ -15,6 +15,8 @@ import { arrayBufferToBase64 } from '../WebAuthn-Tool/utilities/base64';
 const Long = require("long");
 
 const base32 = require('base32.js');
+
+const base32Decode = require('base32-decode')
 
 export function TOTPTool() {
     const [secretKeyValue, setSecretKey] = useState(GenerateBase32SecretKey());
@@ -36,6 +38,8 @@ export function TOTPTool() {
     const [QRUsername, setQRUsername] = useState('random@random.com')
 
     const [QRDetailsModalShow, setQRDetailsModalShow] = useState(false);
+
+    const secretKeyRef = useRef(secretKeyValue);
 
 
 
@@ -86,6 +90,7 @@ export function TOTPTool() {
 
     const [TOTPList, setTOTPList] = useState([])
     useEffect(() => {
+        secretKeyRef.current = secretKeyValue
         updateTOTPCalculation()
     }, [])
 
@@ -114,7 +119,9 @@ export function TOTPTool() {
     }
 
     useEffect(() => {
+        secretKeyRef.current = secretKeyValue
         updateQRTextImage();
+        updateTOTPCalculation();
     }, [secretKeyValue, QRUsername, providerName])
     
     function clickGenerateSecretKey() {
@@ -138,7 +145,8 @@ export function TOTPTool() {
     // Executes every 30 seconds
     useEffect(() => {
         const interval = setInterval(() => {
-          updateTOTPCalculation();
+            //secretKeyRef.current = secretKeyValue
+            updateTOTPCalculation();
         }, 30000);
       
         return () => clearInterval(interval);
@@ -155,6 +163,7 @@ export function TOTPTool() {
         const decoder = new base32.Decoder();
         const uint8Array = decoder.write(base32Str).finalize();
 
+
         const newArrayBuffer = new Uint8Array(uint8Array).buffer
 
         console.log('UINT8')
@@ -166,14 +175,24 @@ export function TOTPTool() {
 
         return newArrayBuffer
     }
-      
+
+    function fixBase32Padding(input) {
+        const noPadding = input.replace(/=+$/, '');
+        const paddingNeeded = (8 - (noPadding.length % 8)) % 8;
+        return noPadding + '='.repeat(paddingNeeded);
+    }
 
     async function hmacSha1(key, countInt) {
         ///const encoder = new TextEncoder();
 
         console.log('Keey')
         console.log(key)
-        const keyRawBytes = decodeBase32ToArrayBuffer(key)
+        const paddedKey = fixBase32Padding(key)
+        console.log('Padded')
+        console.log(paddedKey)
+        //const keyRawBytes = decodeBase32ToArrayBuffer(paddedKey)
+
+        const keyRawBytes = base32Decode(paddedKey, 'RFC4648')
 
         console.log('Buffer3')
         console.log(keyRawBytes)
@@ -271,7 +290,7 @@ export function TOTPTool() {
             
 
             
-            TOTPListNew[idx].hmacSig = await hmacSha1(secretKeyValue, TOTPListNew[idx].hopCount)
+            TOTPListNew[idx].hmacSig = await hmacSha1(secretKeyRef.current, TOTPListNew[idx].hopCount)
 
             //const asciiHash = atob(arrayBufferToBase64(hmacSig));
             TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig));
@@ -615,7 +634,7 @@ export function TOTPTool() {
             TOTPList.map((item) => (
                 <>
                     <Accordion.Item class="interval-item" id={"interval-id" + item.id} eventKey={item.id}>
-                        <Accordion.Header><div style={{border: '1px solid #000', borderRadius: '5px', width: '75px'}}><i class="bi bi-clock"></i> {item.name}</div>     <b>{item.shortTOTPCodeFormatted.slice(0, 3)} {item.shortTOTPCodeFormatted.slice(3, 6)}</b></Accordion.Header>
+                        <Accordion.Header><div style={{display: 'flex', flexDirection: 'row', gap: '15px'}}><div style={{border: '1px solid #000', borderRadius: '5px', width: '75px', paddingLeft: 'auto', paddingRight: 'auto'}}><i class="bi bi-clock"></i> {item.name}</div><div><b>{item.shortTOTPCodeFormatted.slice(0, 3)} {item.shortTOTPCodeFormatted.slice(3, 6)}</b></div></div></Accordion.Header>
                         <Accordion.Body>
                             {renderIntervalMoreDetails(item)}
                         </Accordion.Body>
@@ -654,7 +673,7 @@ export function TOTPTool() {
 
                             
 
-                            <div id="otp-secret">
+                            <div id="otp-secret" style={{gap: '20px'}}>
                                 <div id="qr-code">
                                     <div id="otp-qr-code">
                                         <img src={QRImgValue} width="100%" height="100%"></img>
@@ -664,15 +683,18 @@ export function TOTPTool() {
                                     </div>
                                     {QRCodeModal()}
                                 </div>
-                                <div id="key-section">
-                                    <div id="totp-qr-name">
-                                        <b>Issuer:</b><input type="text" value={providerName} onChange={(event) => {setProviderName(event.target.value)}}></input>
+                                <div id="key-section" style={{width: '100%'}}>
+                                    <div class="totp-qr-name section-row">
+                                        <label><b>Issuer:</b></label>
+                                        <input type="text" value={providerName} onChange={(event) => {setProviderName(event.target.value)}}></input>
                                     </div>
-                                    <div id="totp-qr-username">
-                                    <b>Username:</b><input type="text" value={QRUsername} onChange={(event) => {setQRUsername(event.target.value)}}></input>
+                                    <div class="totp-qr-username section-row">
+                                        <label><b>Username:</b></label>
+                                        <input type="text" value={QRUsername} onChange={(event) => {setQRUsername(event.target.value)}}></input>
                                     </div>
-                                    <div id="secret-key-text">
-                                        <b>Secret Key (Base 32): </b><span id="otp-secret-code"><input type="text" value={secretKeyValue} onChange={(event) => {handleNewKey(event.target.value)}}></input></span><br/>
+                                    <div class="secret-key-text section-row">
+                                        <label><b>Secret Key:</b></label>
+                                        <span id="otp-secret-code"><input type="text" value={secretKeyValue} onChange={(event) => {handleNewKey(event.target.value)}}></input></span>
                                     </div>
                                     <div class="errorBox">
                                         <span></span>

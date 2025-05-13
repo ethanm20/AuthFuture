@@ -63,3 +63,18 @@
 #id-tag {
     width: 50px;
 }
+
+
+.section-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-row label {
+  min-width: 150px;
+}
+
+.section-row input {
+  min-width: 500px;
+}

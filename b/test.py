@@ -26,6 +26,9 @@ def generate_valid_TOTPs(secret):
         print('HOP')
         print(UNIXTimeHops + currHopCount)
 
+        print('Key')
+        print(key)
+
         # Getting the HMAC-SHA1 hash of Secret Key & Interval (as Bytes)
         hash = hmac.HMAC(key, hopCountBytes, hashlib.sha1).digest()
         print('HMAC')
@@ -80,6 +83,6 @@ def generate_valid_TOTPs(secret):
     return TOTPs
 
 while True:
-    secret = "NVKUYRTKKZBDATSIPBAVUZ2GHAYDK2KHNVWWQSRTMVXVQWLROZGQ===="
+    secret = "ABCD===="
     generate_valid_TOTPs(secret)
     time.sleep(30)  # Wait for 10 seconds
