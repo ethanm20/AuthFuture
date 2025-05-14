@@ -39,6 +39,10 @@ export function TOTPTool() {
 
     const [QRDetailsModalShow, setQRDetailsModalShow] = useState(false);
 
+    const [showTOTPErrorBox, setShowTOTPErrorBox] = useState(false)
+
+    const [tempSecretKey, setTempSecretKey] = useState(secretKeyValue)
+
     const secretKeyRef = useRef(secretKeyValue);
 
 
@@ -129,6 +133,8 @@ export function TOTPTool() {
 
         setSecretKey(randomKey)
 
+        setShowTOTPErrorBox(false)
+        setTempSecretKey(randomKey)
 
     }
 
@@ -137,7 +143,28 @@ export function TOTPTool() {
     }
 
     function handleNewKey(key) {
-        setSecretKey(key)
+        console.log('-------------------------ERROR----------------')
+        setTempSecretKey(key)
+        console.log('RAN6')
+        console.log(key)
+        try {
+
+            const decodedArray = base32Decode(fixBase32Padding(key), 'RFC4648')
+
+            if (decodedArray.byteLength !== 0) {
+                setShowTOTPErrorBox(false)
+                setSecretKey(key)
+            } else {
+                setShowTOTPErrorBox(true)
+                return
+            }
+        } catch (error) {
+
+            setShowTOTPErrorBox(true)
+            return
+        }
+
+        
     }
     //-------------------------------------------------------------------------
     //INTERVAL 
@@ -285,10 +312,7 @@ export function TOTPTool() {
             
 
 
-            //Step 5: HMAC Hash
-            //TOTPListNew[idx].hmacSig = hmac(TOTPListNew[idx].hopCount.toString(), secretKeyValue);
-            
-
+            //Step 5: HMAC Hash    
             
             TOTPListNew[idx].hmacSig = await hmacSha1(secretKeyRef.current, TOTPListNew[idx].hopCount)
 
@@ -309,7 +333,6 @@ export function TOTPTool() {
             console.log('Offset')
             console.log(TOTPListNew[idx].offset)
 
-            //const truncatedHash = hmacSig.slice(offset, (offset + 4))
             TOTPListNew[idx].truncatedHash = TOTPListNew[idx].hmacSig.slice(TOTPListNew[idx].offset, (TOTPListNew[idx].offset + 4))
 
             console.log('Truncated Hash')
@@ -317,7 +340,6 @@ export function TOTPTool() {
 
 
             //Long Code
-            //let truncatedBytes = new Uint8Array(truncatedHash)
 
             TOTPListNew[idx].truncatedBytes = new Uint8Array(TOTPListNew[idx].truncatedHash)
 
@@ -338,162 +360,11 @@ export function TOTPTool() {
 
 
             TOTPListNew[idx].shortTOTPCodeFormatted = String(TOTPListNew[idx].shortTOTPCode).padStart(6, '0');
-
-           
-
-            
-
-            //TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
-            
-            //TOTPListNew[idx].hmacSig = hmacSig
-            
-                /*TOTPListNew[idx].hmacSig = hmac
-
-                TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
-
-            
-
-            TOTPListNew[idx].lastByte = TOTPListNew[idx].asciiHash.at(-1).charCodeAt(0)
-
-            TOTPListNew[idx].offset = TOTPListNew[idx].lastByte & 0x0F;
-
-            // & 0x0F
-
-            //Setp 7: Trucated Hash
-            TOTPListNew[idx].truncatedHashAscii = TOTPListNew[idx].asciiHash.slice(TOTPListNew[idx].offset, (TOTPListNew[idx].offset + 4))
-
-            TOTPListNew[idx].truncatedByte1 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(0)
-            TOTPListNew[idx].truncatedByte2 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(1)
-            TOTPListNew[idx].truncatedByte3 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(2)
-            TOTPListNew[idx].truncatedByte4 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(3)
-
-            //Step 8: Long TOTP Code
-            TOTPListNew[idx].longTOTPCode = 0
-            for (let i = 0; i < 3; i++) {
-                // Convert each character to its ASCII value and concatenate
-                TOTPListNew[idx].longTOTPCode += TOTPListNew[idx].truncatedHashAscii.charCodeAt(i);
-            }
-
-            let encoder = new TextEncoder();
-            let encodedHashArray = encoder.encode(TOTPListNew[idx].truncatedHashAscii)
-            //console.log(encodedHashArray)
-            let buffer = encodedHashArray.buffer;
-            let view = new DataView(buffer);
-            TOTPListNew[idx].longTOTPCode = view.getUint32(0);
-
-            
-
-            //Step 9: Short TOTP Code
-            TOTPListNew[idx].shortTOTPCode = TOTPListNew[idx].longTOTPCode & 0x7FFFF;
-            TOTPListNew[idx].shortTOTPCode = TOTPListNew[idx].longTOTPCode % (10 ** 6);
-
-            //Step 10: Formatting
-            TOTPListNew[idx].shortTOTPCodeFormatted = TOTPListNew[idx].shortTOTPCode.toString().padStart(6, '0');
-            })
-            */
-
-            /*
-            console.log('HMAC SIG')
-            console.log(TOTPListNew[idx].hmacSig)
-            console.log(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
-            let binaryStr = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
-            //let binaryStr = "a"
-
-            
-
-            TOTPListNew[idx].decimal = 0
-            for (let i = 0; i < binaryStr.length; i++) {
-                // Convert each character in the binary string to its byte value
-                TOTPListNew[idx].decimal = TOTPListNew[idx].decimal * 256 + binaryStr.charCodeAt(i); // 256 is used as each character represents one byte
-              }
-
-
-            //Step 6: Calculate Offset
-            //TOTPListNew[idx].offset = (285 >> 2);
-
-            //TOTPListNew[idx].offset = (12285 & 0xFF) & 0x0F;
-
-            //TOTPListNew[idx].offset = (Number(parseInt(TOTPListNew[idx].hmacSig, 16)) & 0xFF) & 0x0F;
-
-            //TOTPListNew[idx].offset = Number(parseInt(TOTPListNew[idx].hmacSig, 16)) ;
-            */
-            /*
-            ------------------------------
-            {item.hmacSig.toString(base64).slice(-1)}
-            |------------------------------
-            {atob(item.hmacSig).at(-1).charCodeAt(0) & 0x0F}
-            -------------------------------
-            {atob(item.hmacSig).charCodeAt(-1) & 0x0F}
-            */
-            /*
-            TOTPListNew[idx].asciiHash = atob(arrayBufferToBase64(TOTPListNew[idx].hmacSig))
-
-            console.log('ASCII hash')
-            console.log(TOTPListNew[idx].asciiHash)
-
-            TOTPListNew[idx].lastByte = TOTPListNew[idx].asciiHash.at(-1).charCodeAt(0)
-
-            TOTPListNew[idx].offset = TOTPListNew[idx].lastByte & 0x0F;
-
-            // & 0x0F
-
-            //Setp 7: Trucated Hash
-            TOTPListNew[idx].truncatedHashAscii = TOTPListNew[idx].asciiHash.slice(TOTPListNew[idx].offset, (TOTPListNew[idx].offset + 4))
-
-            TOTPListNew[idx].truncatedByte1 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(0)
-            TOTPListNew[idx].truncatedByte2 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(1)
-            TOTPListNew[idx].truncatedByte3 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(2)
-            TOTPListNew[idx].truncatedByte4 = TOTPListNew[idx].truncatedHashAscii.charCodeAt(3)
-
-            //Step 8: Long TOTP Code
-            TOTPListNew[idx].longTOTPCode = 0
-            for (let i = 0; i < 3; i++) {
-                // Convert each character to its ASCII value and concatenate
-                TOTPListNew[idx].longTOTPCode += TOTPListNew[idx].truncatedHashAscii.charCodeAt(i);
-            }
-
-            let encoder = new TextEncoder();
-            let encodedHashArray = encoder.encode(TOTPListNew[idx].truncatedHashAscii)
-            //console.log(encodedHashArray)
-            let buffer = encodedHashArray.buffer;
-            let view = new DataView(buffer);
-            TOTPListNew[idx].longTOTPCode = view.getUint32(0);
-
-            
-
-            //Step 9: Short TOTP Code
-            TOTPListNew[idx].shortTOTPCode = TOTPListNew[idx].longTOTPCode & 0x7FFFF;
-            TOTPListNew[idx].shortTOTPCode = TOTPListNew[idx].longTOTPCode % (10 ** 6);
-
-            //Step 10: Formatting
-            TOTPListNew[idx].shortTOTPCodeFormatted = TOTPListNew[idx].shortTOTPCode.toString().padStart(6, '0');
-            */
+        
         }
         
-        //try {
-        setTOTPList(TOTPListNew)
-        //} catch {
-        //return TOTPListNew
-        //}
-
         
-
-        //(new Date(currTimeEpoch + (item.timeOffset * 1000))).toUTCString()
-
-        /*
-        <div id="name-tag">
-                            {item.name}
-                        </div>
-                        <div id="totp-code-tag">
-                            {item.shortTOTPCodeFormatted.slice(0, 3)}-{item.shortTOTPCodeFormatted.slice(3, 6)}
-                        </div>
-                        <div id="more-details-tag">
-                            <Button variant="info" onClick={() => {setOpenIntervalTabNo(item.id)}}><i class="bi bi-arrow-down-circle"></i></Button>
-                        </div>
-                        <div id="more-details-area">
-                            {renderIntervalMoreDetails(item)}
-                        </div>
-                        */
+        setTOTPList(TOTPListNew)
 
     }
 
@@ -532,12 +403,10 @@ export function TOTPTool() {
     }
 
     function renderBytes(byteUint8Array) {
-        //const binaryString = number.toString(2).padStart(8, '0');
-        //const bits = binaryString.split('');
         const byteArray = Array.from(byteUint8Array)
 
         return (
-            <div style={{ display: 'flex', gap: '2px' }}>
+            <div className="bytesTable" style={{ display: 'flex', gap: '2px' }}>
             {byteArray.map((bit, index) => (
                 <div
                 key={index}
@@ -694,11 +563,13 @@ export function TOTPTool() {
                                     </div>
                                     <div class="secret-key-text section-row">
                                         <label><b>Secret Key:</b></label>
-                                        <span id="otp-secret-code"><input type="text" value={secretKeyValue} onChange={(event) => {handleNewKey(event.target.value)}}></input></span>
+                                        <span id="otp-secret-code"><input type="text" value={tempSecretKey} onChange={(event) => {handleNewKey(event.target.value)}}></input></span>
                                     </div>
-                                    <div class="errorBox">
-                                        <span></span>
-                                    </div>
+                                    {showTOTPErrorBox && (
+                                        <div class="alert alert-danger alert-dismissible fade show mt-3 errorBox" role="alert" style={{paddingTop: '0px', paddingBottom: '5px'}}>
+                                            <span class="errorMessage" style={{fontSize: '16px'}}><b>Invalid Secret Key: </b> Secret Key must be in Base 32 format</span>
+                                        </div>
+                                    )}
                                     <div id="key-update-buttons">
                                         <Button variant="light" onClick={clickGenerateSecretKey}><i class="bi bi-arrow-repeat"></i> Generate</Button>
                                     </div>

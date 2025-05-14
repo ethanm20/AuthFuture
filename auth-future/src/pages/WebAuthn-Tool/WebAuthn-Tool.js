@@ -1,5 +1,3 @@
-//import { Button } from "react-bootstrap";
-
 
 import { NavigationBar } from "../../features/NavigationBar/NavigationBar";
 
@@ -80,6 +78,8 @@ export function WebAuthnTool() {
 
     const [passkeyDiagramTab, setPasskeyDiagramTab] = useState(0)
 
+    const [displaySpinner, setDisplaySpinner] = useState(false)
+
 
     const [assertionData, setAssertionData] = useState({
         "id": "",
@@ -89,6 +89,9 @@ export function WebAuthnTool() {
         "userHandle": ""
     })
 
+    
+    const [assertionVerified, setAssertionVerified] = useState(false)
+
 
     const [validationCalculations, setValidationCalculations] = useState({
         'id': '',
@@ -96,6 +99,12 @@ export function WebAuthnTool() {
         'hmac-sha256': '',
         'authenticatorJSONCombined': ''
     })
+
+    useEffect(() => {
+        if ((registerNewPasskeyTab == 1) || (loginWithPasskeyTab == 1)) {
+            setChallenge(GenerateBase64SecretKey())
+        }
+    }, [registerNewPasskeyTab, loginWithPasskeyTab])
 
 
     function toggleRegisterNewPasskeyTab() {
@@ -107,7 +116,6 @@ export function WebAuthnTool() {
     }
 
     function togglePasskeyLoginTab() {
-        //setLoginWithPasskeyTab((loginWithPasskeyTab) => !loginWithPasskeyTab)
         if (loginWithPasskeyTab === 0) {
             setLoginWithPasskeyTab((loginWithPasskeyTab) => 1)
         } else {
@@ -118,6 +126,8 @@ export function WebAuthnTool() {
     
 
     function registerPasskey() {
+        setDisplaySpinner(true)
+
         navigator.credentials.create({
             "publicKey": {
                 "challenge": Base64Binary.decode(challenge),
@@ -158,6 +168,8 @@ export function WebAuthnTool() {
             setCurrAlg(response.response.getPublicKeyAlgorithm())
             setCurrJSON(decoder.decode(response.response.clientDataJSON))
             setCurrTransports(response.response.getTransports())
+
+            setDisplaySpinner(false)
 
             setRegisterNewPasskeyTab(2)
         })
@@ -240,17 +252,7 @@ export function WebAuthnTool() {
         }
     }
 
-    //const codeRef = useRef(null);
     function RenderPasskeyRegisterTabPage1() {
-        /*const codeRef = useRef(null);
-
-        useEffect(() => {
-            hljs.highlightBlock(codeRef.current);
-        }, []);*/
-
-        /*useEffect(() => {
-            hljs.highlightBlock(codeRef.current);
-          }, []);*/
         
         return (
             <>
@@ -304,7 +306,12 @@ export function WebAuthnTool() {
                         `}    
                     </SyntaxHighlighter>
                 </pre>
-                <Button variant="danger" onClick={toggleRegisterNewPasskeyTab}>Cancel</Button> <Button variant="success" onClick={(event) => {registerPasskey()}}>Register</Button>
+                <div style={{display: 'flex', flexDirection: 'row', height: '40px', gap: '5px'}}>
+                    <Button variant="danger" onClick={toggleRegisterNewPasskeyTab}>Cancel</Button> <Button variant="success" onClick={(event) => {registerPasskey()}}>Register</Button> 
+                    <div style={{display: 'block', height: '40px', width: '40px'}}>
+                        {displaySpinner && (<div class="spinner"></div>)}
+                    </div>
+                </div>
             </>
         )
     }
@@ -436,6 +443,10 @@ export function WebAuthnTool() {
         console.log('Verified ECDSA');
         console.log(verified);
 
+        if (verified) {
+            setAssertionVerified(true)
+        }
+
     
     }
 
@@ -460,8 +471,12 @@ export function WebAuthnTool() {
             signatureRaw,       // Signature from authenticator
             authenticatorDataJSONRaw      // authData + SHA256(clientDataJSON)
           );
-        console.log('Verified RSA')
-        console.log(verified)
+        //console.log('Verified RSA')
+        //console.log(verified)
+
+        if (verified) {
+            setAssertionVerified(true)
+        }
     }
 
     function concatArrayBuffers(buffer1, buffer2) {
@@ -518,189 +533,12 @@ export function WebAuthnTool() {
         console.log('------------------------------')
 
         if (getAlgoDetails(assertionData.id).algoName == 'RS256') {
-            // (-257) RS256: RSASSA-PKCS1-v1_5 using SHA-256
-
-            /*
-            //HMAC SHA256
-            console.log('PUblic Key')
-            console.log(settings.publicKey)
-
-            //1. Perform SHA256 signature on clientDataJSON
-            const hash = sha256(settings.clientDataJSON)
-            settings.sha256 = CryptoJS.enc.Base64.stringify(hash)
-
-            //2. Combine the Authenticator Bytes and SHA256
-            const buffer1 = Buffer.from(settings.authenticatorData, 'base64');
-            const buffer2 = Buffer.from(settings.sha256, 'base64');
-            
-            settings.authenticatorJSONCombined = Buffer.concat([buffer1, buffer2]).toString('base64')
-        
-
-            let pem = `-----BEGIN PUBLIC KEY-----\n${settings.publicKey.match(/.{1,64}/g).join('\n')}\n-----END PUBLIC KEY-----`;
-            */
-            // Import the key and export as JWK
-            /*
-            (async () => {
-            const key = await importSPKI(pem, 'RS256'); // for RSA public key
-            const jwk = await exportJWK(key);
-            console.log('Done')
-            console.log(jwk);
-            })();*/
-
-            /*
-            let publicKeyRawRS256 = Base64Binary.decode(settings.publicKey)
-            let signatureRawRS256 = Base64Binary.decode(settings.signature)
-            let authenticatorDataJSONRawRS256 = Base64Binary.decode(settings.authenticatorJSONCombined)
-            */
-
+            // (-257) RS256: RSASSA-PKCS1-v1_5 using SHA-256  
             verifyRS256(publicKeyRaw, signatureRaw, authenticatorDataJSONRaw)
-
-            /*
-            (async () => {
-                let publicKeyRSA = await crypto.subtle.importKey(
-                    'spki',                // Format of the key
-                    Base64Binary.decode(settings.publicKey),             // ArrayBuffer from PEM
-                    {
-                        name: 'RSASSA-PKCS1-v1_5',  // or 'RSA-PSS'
-                        hash: { name: 'SHA-256' }
-                    },
-                    true,
-                    ['verify']
-                );
-                let verified = await crypto.subtle.verify(
-                    {
-                      name: 'RSASSA-PKCS1-v1_5',
-                      hash: { name: 'SHA-256' }
-                    },
-                    publicKeyRSA,
-                    Base64Binary.decode(settings.signature),       // Signature from authenticator
-                    Base64Binary.decode(settings.authenticatorJSONCombined)       // authData + SHA256(clientDataJSON)
-                  );
-                console.log('Verified14')
-                console.log(verified)
-            })(); */
-
-            
-
-            //Verify 
-            //const forge = require('node-forge');
-            //let derBuffer = forge.util.createBuffer(settings.publicKey, 'base64');
-            /*
-            //let publicKey = forge.pki.publicKeyFromDer(derBuffer);
-            let publicKey = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(derBuffer))
-            */
-            
-            /*
-            
-            const forge = require('node-forge');
-            let publicKey = forge.pki.publicKeyFromPem(pem);
-            console.log('Done1')
-
-            let data = forge.util.createBuffer(settings.authenticatorJSONCombined, 'base64');
-            let signature = forge.util.createBuffer(settings.signature, 'base64');
-
-            console.log('Done0')
-            
-            console.log('Done2')
-            let verified = publicKey.verify(data, signature);
-            console.log('Done3')
-
-            settings.verified = String(verified)*/
-
         } else if (getAlgoDetails(assertionData.id).algoName == 'ES256') {
             // (-7) ES256: ECDSA w/ SHA-256
-
-            //1. Perform SHA256 signature on clientDataJSON
-            /*const hashb = sha256(settings.clientDataJSON)
-            settings.sha256 = CryptoJS.enc.Base64.stringify(hashb)
-
-            console.log('Authenticator Data:' + settings.authenticatorData)
-            console.log('SHA256:' + settings.sha256)
-
-            //2. Combine the Authenticator Bytes and SHA256
-            const buffer1b = Buffer.from(settings.authenticatorData, 'base64');
-            const buffer2b = Buffer.from(settings.sha256, 'base64');
-            
-            const mergedb = Buffer.concat([buffer1b, buffer2b])
-            console.log('before1')
-            console.log(mergedb)
-            const resultb = arrayBufferToBase64(mergedb.buffer)
-            console.log(resultb)
-            console.log(typeof resultb)
-
-            console.log('Before13')
-            settings.authenticatorJSONCombined = resultb
-            console.log('After13')
-
-            let publicKeyRaw = Base64Binary.decode(settings.publicKey)
-            let signatureRaw = Base64Binary.decode(settings.signature)
-            let authenticatorDataJSONRaw = Base64Binary.decode(settings.authenticatorJSONCombined)
-            */
-
             verifyES256(publicKeyRaw, signatureRaw, authenticatorDataJSONRaw)
-
-
-            //let pem1 = `-----BEGIN PUBLIC KEY-----\n${settings.publicKey.match(/.{1,64}/g).join('\n')}\n-----END PUBLIC KEY-----`;
-
-            /*
-            crypto.subtle.importKey(
-                'spki', // Format of the key
-                publicKeyRaw, // ArrayBuffer from PEM
-                {
-                    name: 'ECDSA',
-                    namedCurve: 'P-256'
-                },
-                true,
-                ['verify']
-            ).then(publicKeyRSA => {
-                return crypto.subtle.verify(
-                    {
-                        name: 'ECDSA',
-                        hash: { name: 'SHA-256' }
-                    },
-                    publicKeyRSA,
-                    signatureRaw, // Signature from authenticator
-                    authenticatorDataJSONRaw // authData + SHA256(clientDataJSON)
-                );
-            }).then(verified => {
-                console.log('Verified13');
-                console.log(verified);
-            }).catch(error => {
-                console.error('Verification failed:', error);
-            });*/
-            
-            /*
-            (async () => {
-                let publicKeyRSA = await crypto.subtle.importKey(
-                    'spki',                // Format of the key
-                    Base64Binary.decode(settings.publicKey),             // ArrayBuffer from PEM
-                    {
-                        name: 'ECDSA',
-                        namedCurve: 'P-256'
-                    },
-                    true,
-                    ['verify']
-                );
-                let verified = await crypto.subtle.verify(
-                    {
-                        name: 'ECDSA',
-                        hash: { name: 'SHA-256' }
-                      },
-                    publicKeyRSA,
-                    Base64Binary.decode(settings.signature),       // Signature from authenticator
-                    Base64Binary.decode(settings.authenticatorDataJSON)       // authData + SHA256(clientDataJSON)
-                  );
-                console.log('Verified14')
-                console.log(verified)
-            })();
-            */
         }
-
-
-
-
-
-
 
         setValidationCalculations(settings)
     }
@@ -758,6 +596,7 @@ export function WebAuthnTool() {
             }
         }
 
+        setDisplaySpinner(true)
 
         navigator.credentials.get(options)
         .then((response) => {
@@ -771,6 +610,8 @@ export function WebAuthnTool() {
                 "signature": arrayBufferToBase64(response.response.signature),
                 "userHandle": arrayBufferToBase64(response.response.userHandle)
             })
+
+            setDisplaySpinner(false)
 
             setLoginWithPasskeyTab(2)
 
@@ -824,7 +665,12 @@ export function WebAuthnTool() {
                         `}    
                     </SyntaxHighlighter>
                 </pre>
-                <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {verifyPasskey()}}>Verify</Button>
+                <div style={{display: 'flex', flexDirection: 'row', height: '40px', gap: '5px'}}>
+                    <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {verifyPasskey()}}>Verify</Button> 
+                    <div style={{display: 'block', height: '40px', width: '40px'}}>
+                        {displaySpinner && (<div class="spinner"></div>)}
+                    </div>
+                </div>
             </>
         )
     }
@@ -1053,18 +899,11 @@ export function WebAuthnTool() {
                 <pre>
                     <SyntaxHighlighter language="javascript" style={coldarkDark}>
                         {`
-                        let verified = await crypto.subtle.verify(
-                            {
-                            name: 'RSASSA-PKCS1-v1_5',
-                            hash: { name: 'SHA-256' }
-                            },
-                            Base64.decode(assertation.publicKeyRSA),        // Public Key sourced from Passkey Registration (Assertation stage)
-                            Base64.decode(assertion.signatureRaw),          // Assertion Signature
-                            Base64.decode(assertion.authenticatorDataJSON)  // authData + SHA256(clientDataJSON)
-                        );
+                        ${renderLoginVerifyJSON()}
                         `}    
                     </SyntaxHighlighter>
                 </pre>      
+                {assertionVerified && (
                 <div style={{backgroundColor: 'green', border: '1px solid green', borderRadius: '20px', color: '#FFF', display: 'flex', flexDirection: 'row'}}>
                     <div style={{width: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                         <i class="bi bi-check-circle-fill"></i>
@@ -1073,9 +912,23 @@ export function WebAuthnTool() {
                         <span><h3>Passkey Login Successful - Assertion Verified</h3></span>
                         <span><b>Assertion Signature</b> decrypted with <b>Passkey #{getSavedCred(assertionData.id).idNum} Public Key</b> using <b>{getAlgoDetails(assertionData.id)['algoName']}</b> = SHA-256 Hash of <b>AuthenticatorData + SHA256(ClientDataJSON)</b></span>
                     </div>
-                </div>  
+                </div> 
+                )}
+                {!assertionVerified && (
+                    <div className="alert alert-danger d-flex align-items-center" role="alert">
+                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                        <div>
+                            <h5 className="mb-1">Passkey Login Failed - Assertion Not Verified</h5>
+                            The signature could not be verified. Please try again or register a new passkey.
+                        </div>
+                    </div>
+                )} 
 
-                <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" onClick={(event) => {setLoginWithPasskeyTab(0)}}>Finish</Button>
+                <Button variant="danger" onClick={togglePasskeyLoginTab}>Cancel</Button> <Button variant="success" 
+                    onClick={(event) => {
+                    setAssertionVerified(false)
+                    setLoginWithPasskeyTab(0)
+                    }}>Finish</Button>
             </>
         )
     }
