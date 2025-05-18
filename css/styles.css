@@ -28,6 +28,7 @@
   }
   .github-header-outer {
     border-color: transparent !important;
+    font-size: 18px !important;
   }
 
   #otp-secret {
