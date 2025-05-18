@@ -531,7 +531,7 @@ export function TOTPTool() {
 
     return (
         <>
-            <section style={{backgroundColor: '#2a2a2a', paddingTop:'20px', paddingBottom: '20px'}}>
+            <section style={{backgroundColor: '#2a2a2a', paddingTop:'20px', paddingBottom: '20px'}} id="totp-section">
                 <Container>
                     <link rel="stylesheet" href="/css/totp-tool.css"></link>
                     <h2>Time-Based One Time Passwords</h2>

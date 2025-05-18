@@ -1278,7 +1278,7 @@ export function WebAuthnTool() {
 
     return (
         <>
-        <section style={{backgroundColor: '#f1f1f1', color: '#000', paddingTop: '10px', paddingBottom: '30px'}}>
+        <section style={{backgroundColor: '#f1f1f1', color: '#000', paddingTop: '10px', paddingBottom: '30px'}} id="webauthn-section">
             <Container>
                 <link rel="stylesheet" href="/css/webauthn-tool.css"></link>
 

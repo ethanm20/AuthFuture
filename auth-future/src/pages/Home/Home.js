@@ -19,12 +19,12 @@ export function Home() {
                                 {/* Call to Action Button */}
                                 <Row> 
                                     <Col md={5}>
-                                        <Button variant="light" size="lg" href="#cta-section" className="cta-button">
+                                        <Button variant="light" size="lg" href="#webauthn-section" className="cta-button">
                                             WebAuthn Passkeys <i class="bi bi-arrow-right"></i>
                                         </Button>
                                     </Col>
                                     <Col md={7}>
-                                        <Button variant="outline-light" size="lg" href="#cta-section" className="cta-button">
+                                        <Button variant="outline-light" size="lg" href="#totp-section" className="cta-button">
                                             Time-Based One Time Passwords <i class="bi bi-arrow-right"></i>
                                         </Button>
                                     </Col>
