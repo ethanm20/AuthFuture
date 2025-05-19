@@ -28,6 +28,7 @@
   }
   .github-header-outer {
     border-color: transparent !important;
+    font-size: 20px !important;
   }
 
   #otp-secret {
@@ -44,6 +45,6 @@
 
 @media (max-width: 1000px) {
   .navbar {
-    min-height: 50px !important;
+    min-height: 60px !important;
   }
 }
