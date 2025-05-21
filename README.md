@@ -2,7 +2,7 @@
 
 AuthFuture is a web app that enables users to learn about the new WebAuthn and the Time-Based One Time Passwords (TOTP) authentication methods using a live demo that illustrates how both methods work in granular detail. 
 
-**URL Link:** [https://authfuture.com](authfuture.com)
+**URL Link:** [https://authfuture.com](https://authfuture.com)
 
 ## Technology Stack
 
