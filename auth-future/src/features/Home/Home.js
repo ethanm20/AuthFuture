@@ -1,4 +1,4 @@
-import { NavigationBar } from "../../features/NavigationBar/NavigationBar";
+import { NavigationBar } from "../NavigationBar/NavigationBar";
 import { TOTPTool } from "../TOTP-Tool/TOTP-Tool";
 import { WebAuthnTool } from "../WebAuthn-Tool/WebAuthn-Tool";
 

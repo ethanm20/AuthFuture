@@ -5,11 +5,11 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import "@radix-ui/themes/styles.css";
 
 import { BrowserRouter, Routes, Route} from 'react-router-dom';
-import { Home } from './pages/Home/Home';
+import { Home } from './features/Home/Home';
 import { NavigationBar } from './features/NavigationBar/NavigationBar';
 import { Footer } from './features/Footer/Footer';
-import { TOTPTool } from './pages/TOTP-Tool/TOTP-Tool';
-import { WebAuthnTool } from './pages/WebAuthn-Tool/WebAuthn-Tool';
+import { TOTPTool } from './features/TOTP-Tool/TOTP-Tool';
+import { WebAuthnTool } from './features/WebAuthn-Tool/WebAuthn-Tool';
 
 import { Theme } from "@radix-ui/themes";
 

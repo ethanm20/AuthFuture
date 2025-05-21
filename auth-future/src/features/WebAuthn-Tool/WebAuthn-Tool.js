@@ -1,5 +1,5 @@
 
-import { NavigationBar } from "../../features/NavigationBar/NavigationBar";
+import { NavigationBar } from "../NavigationBar/NavigationBar";
 
 import {Button, Container, Modal, ButtonGroup} from 'react-bootstrap';
 
