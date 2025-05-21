@@ -5,16 +5,15 @@ import Accordion from 'react-bootstrap/Accordion';
 import { GenerateBase32SecretKey } from './utilities/generate-base-32-key';
 import { useState, useEffect, useRef } from 'react';
 
-import base64 from 'crypto-js/enc-base64';
+import { fixBase32Padding, encodeLongLongInt } from './utilities/base32-utilities';
 
-//import hmac from 'crypto-js/hmac-sha256';
-
-import hmac from 'crypto-js/hmac-sha1';
 import { arrayBufferToBase64 } from '../WebAuthn-Tool/utilities/base64';
 
-const Long = require("long");
+import { hmacSha1 } from './utilities/hmac-sha1';
 
-const base32 = require('base32.js');
+import { RenderIntervalMoreDetails, RenderIntervals } from './utilities/interval-more-details';
+
+
 
 const base32Decode = require('base32-decode')
 
@@ -45,54 +44,9 @@ export function TOTPTool() {
 
     const secretKeyRef = useRef(secretKeyValue);
 
-
-
-    const initialTOTPList = [
-        {'id': 0,
-        'name': 'T-90',
-        'timeOffset': -90,
-        'epochTime': 0,
-        'strTime': ''
-        },
-        {'id': 1,
-        'name': 'T-60',
-        'timeOffset': -60,
-        'epochTime': 0,
-        'strTime': ''
-        },
-        {'id': 2,
-        'name': 'T-30',
-        'timeOffset': -30,
-        'epochTime': 0,
-        'strTime': ''
-        },
-        {'id': 3,
-        'name': 'T-0',
-        'timeOffset': 0,
-        'epochTime': 0,
-        'strTime': ''
-        },
-        {'id': 4,
-        'name': 'T+30',
-        'timeOffset': 30,
-        'epochTime': 0,
-        'strTime': ''
-        },
-        {'id': 5,
-        'name': 'T+60',
-        'timeOffset': 60,
-        'epochTime': 0,
-        'strTime': ''
-        }, 
-        {'id': 6,
-        'name': 'T+90',
-        'timeOffset': 90,
-        'epochTime': 0,
-        'strTime': ''
-        }
-    ]
-
     const [TOTPList, setTOTPList] = useState([])
+
+
     useEffect(() => {
         secretKeyRef.current = secretKeyValue
         updateTOTPCalculation()
@@ -138,9 +92,6 @@ export function TOTPTool() {
 
     }
 
-    function clickValidate2FA() {
-        return null;
-    }
 
     function handleNewKey(key) {
         console.log('-------------------------ERROR----------------')
@@ -179,83 +130,13 @@ export function TOTPTool() {
         return () => clearInterval(interval);
       }, []);
     
-    function encodeLongLongInt(valueStr) {
-        const longVal = Long.fromString(valueStr); // Supports large integers
-        const bytes = longVal.toBytesBE(); // Big-endian byte array (8 bytes)
+    
 
-        return Uint8Array.from(bytes);
-    }
+    
 
-    function decodeBase32ToArrayBuffer(base32Str) {
-        const decoder = new base32.Decoder();
-        const uint8Array = decoder.write(base32Str).finalize();
+    
 
-
-        const newArrayBuffer = new Uint8Array(uint8Array).buffer
-
-        console.log('UINT8')
-        console.log(uint8Array)
-        console.log(typeof uint8Array)
-        console.log('Buffer')
-        console.log(newArrayBuffer)
-        // Convert Uint8Array to ArrayBuffer
-
-        return newArrayBuffer
-    }
-
-    function fixBase32Padding(input) {
-        const noPadding = input.replace(/=+$/, '');
-        const paddingNeeded = (8 - (noPadding.length % 8)) % 8;
-        return noPadding + '='.repeat(paddingNeeded);
-    }
-
-    async function hmacSha1(key, countInt) {
-        ///const encoder = new TextEncoder();
-
-        console.log('Keey')
-        console.log(key)
-        const paddedKey = fixBase32Padding(key)
-        console.log('Padded')
-        console.log(paddedKey)
-        //const keyRawBytes = decodeBase32ToArrayBuffer(paddedKey)
-
-        const keyRawBytes = base32Decode(paddedKey, 'RFC4648')
-
-        console.log('Buffer3')
-        console.log(keyRawBytes)
-      
-        // Import the secret key
-        const cryptoKey = await crypto.subtle.importKey(
-          'raw', 
-          keyRawBytes, 
-          { name: 'HMAC', hash: 'SHA-1' }, 
-          false, 
-          ['sign']
-        );
-
-        console.log('AFTER8')
-      
-        // Sign the message using the key
-        const signature = await crypto.subtle.sign(
-          'HMAC', 
-          cryptoKey, 
-          encodeLongLongInt(String(countInt))
-        );
-      
-        // Convert ArrayBuffer to hex string
-        const hashArray = Array.from(new Uint8Array(signature));
-
-        console.log('KEY')
-        console.log(key)
-
-        console.log('HOP COUNT')
-        console.log(countInt)
-
-        console.log('FINAL HASH B64')
-        console.log(arrayBufferToBase64(hashArray))
-      
-        return hashArray;
-    }
+    
 
 
     async function updateTOTPCalculation() {
@@ -299,7 +180,8 @@ export function TOTPTool() {
                 'truncatedBytes': null,
                 'longTOTPCode': null,
                 'shortTOTPCode': 111111,
-                'shortTOTPCodeFormatted': "111111"
+                'shortTOTPCodeFormatted': "111111",
+                "secretKey": secretKeyValue
             })
 
             //Step 1 & Step 2: Update Time for Item
@@ -368,150 +250,7 @@ export function TOTPTool() {
 
     }
 
-    function updateCurrentTime() {
-        const currTime = new Date()
-        //const utcStr = currTime.toUTCString()
-
-        const epochTime = currTime.timestamp()
-
-        return epochTime
-    }
-
-    function renderBits(number) {
-        const binaryString = number.toString(2).padStart(8, '0');
-        const bits = binaryString.split('');
-
-        return (
-            <div style={{ display: 'flex', gap: '2px' }}>
-            {bits.map((bit, index) => (
-                <div
-                key={index}
-                style={{
-                    border: '1px solid black',
-                    padding: '0px',
-                    width: '20px',
-                    textAlign: 'center',
-                    fontFamily: 'monospace'
-                }}
-                >
-                {bit}
-                </div>
-            ))}
-            </div>
-        );
-
-    }
-
-    function renderBytes(byteUint8Array) {
-        const byteArray = Array.from(byteUint8Array)
-
-        return (
-            <div className="bytesTable" style={{ display: 'flex', gap: '2px' }}>
-            {byteArray.map((bit, index) => (
-                <div
-                key={index}
-                style={{
-                    border: '1px solid black',
-                    padding: '0px',
-                    width: '50px',
-                    textAlign: 'center',
-                    fontFamily: 'monospace'
-                }}
-                >
-                {bit}
-                </div>
-            ))}
-            </div>
-        );
-
-    }
-
-    function renderIntervalMoreDetails(item) {
-        if (openIntervalTabNo === item.id || (1 === 1)) {
-            return (
-                <>
-                    <div>
-
-                        <h4>Part 1: Calculate Hop Count</h4>
-                        <p>Calculate the number of 30 second intervals (hops) since <b>Epoch Time</b> (midnight Jan 1, 1970 UTC) to <b>{item.name}</b>.</p>
-                        
-                        <span><b>Time ({item.name}):</b> {item.strTime}</span><br/>
-
-                        <span><b>Time since Epoch:</b> {(item.epochTime / 1000)} seconds</span><br/>
-
-                        <b>Hop Count</b> = Time Since Epoch / 30 seconds <br/> 
-                                  = {(item.epochTime / 1000)} seconds / 30 seconds <br/>
-                                  = {item.hopCount}
-                        <br/>
-                        <br/>
-                        <h4>Part 2: HMAC-SHA1 Hash</h4>
-                        <p>Calculate the HMAC-SHA1 hash of the <b>Hop Count</b> using the <b>Secret Key</b>.</p>
-                        <b>Hop Count: </b> {item.hopCount}<br/>
-                        <b>Secret Key: </b> {secretKeyValue}<br/>
-                        <br/>
-                        <b>HMAC-SHA1 Hash (Base64):</b> HMAC-SHA1(Secret Key, Hop Count) <br/>
-                        = {arrayBufferToBase64(item.hmacSig)} <br/>
-                        <br/>
-                        {renderBytes(item.hmacSig)}
-                        <br/>
-                        <h4>Part 3: Calculate Offset</h4>
-                        <p>Offset is the <b>last 4 bits of the above HMAC-SHA1 hash.</b></p>
-                        <b>Last Byte of HMAC-SHA1:</b> {item.lastByte}   {renderBits(item.lastByte)}
-                        <br/>
-                        <b>Offset:</b> Extract last 4 bits of last byte<br/>
-                        = Last Byte & 0x0F<br/> 
-                        = {item.lastByte} & 0x0F<br/> 
-                        = {item.offset}       <br/>
-                        {renderBits(item.offset)}
-                        <br/>
-                        <br/>
-
-                        <h4>Part 4: Truncated Hash</h4>
-                        <p>Truncated Hash is a 4 byte extraction of the HMAC-SHA1 hash starting from the Offset index.</p>
-
-                        Full HMAC-SHA1 Hash (Byte Array):
-                        {renderBytes(item.hmacSig)}
-                        <br/>
-                        Truncated Hash = SHA1-Hash[Offset: (Offset + 4)] <br/>
-                                       = SHA1-Hash[{item.offset} : ({item.offset} + 4)] <br/>
-                                       = SHA1-Hash[{item.offset} : {item.offset + 4}] <br/>
-                                       {renderBytes(item.truncatedBytes)}
-                        <br/>
-                        <br/>
-                        <h4>Part 5: Long TOTP Code</h4>
-                        <p>Long TOTP code calculated by representing the <b>4-byte Truncated Hash</b> as a single <b>Unsigned 32-bit Integer</b>.</p>
-                        {renderBytes(item.truncatedBytes)}
-
-                        <b>Long TOTP Code:</b> {item.longTOTPCode}<br/>
-
-                        <br/>
-                        <br/>
-
-                        <h4>Part 6: Short TOTP Code</h4>
-                        <p>Extract only the last 6 digits for standard TOTP authenticator format.</p>
-
-                        <b>Short TOTP Code:</b> {item.shortTOTPCodeFormatted} <br/>
-                    </div>
-                </>
-            )
-        }
-
-    }
-
-    function renderIntervals() {
-        return (
-            TOTPList.map((item) => (
-                <>
-                    <Accordion.Item class="interval-item" id={"interval-id" + item.id} eventKey={item.id}>
-                        <Accordion.Header><div style={{display: 'flex', flexDirection: 'row', gap: '15px'}}><div style={{border: '1px solid #000', borderRadius: '5px', width: '75px', paddingLeft: 'auto', paddingRight: 'auto'}}><i class="bi bi-clock"></i> {item.name}</div><div><b>{item.shortTOTPCodeFormatted.slice(0, 3)} {item.shortTOTPCodeFormatted.slice(3, 6)}</b></div></div></Accordion.Header>
-                        <Accordion.Body>
-                            {renderIntervalMoreDetails(item)}
-                        </Accordion.Body>
-                    </Accordion.Item>
-                </>
-            ))
-        )
-    }
+    
 
     function QRCodeModal() {
         return (
@@ -584,7 +323,7 @@ export function TOTPTool() {
                                 </div>
                                 <div>
                                     <Accordion>
-                                        {renderIntervals()}
+                                        {RenderIntervals(TOTPList)}
                                     </Accordion>
                                 </div>
                             </div>
