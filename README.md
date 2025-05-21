@@ -7,4 +7,5 @@ AuthFuture is a web app that enables users to learn about the new WebAuthn and t
 ## Technology Stack
 
 * The web app is developed in **React** and runs entirely on the frontend.
+* This web app is hosted using **GitHub Pages**.
 * **Dependencies:** React-Bootstrap, ReactFlow,  
