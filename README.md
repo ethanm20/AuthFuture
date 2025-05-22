@@ -12,4 +12,4 @@ AuthFuture is a web app that enables users to learn about the new WebAuthn and t
 * This web app is hosted using **GitHub Pages**.
 * **Dependencies:** React-Bootstrap, ReactFlow,  
 
-## 
+## Dependencies
